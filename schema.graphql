@@ -1,0 +1,56 @@
+"""
+A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar Date
+
+"""
+A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+"""
+scalar DateTime
+
+type Location {
+  battery: Float
+  id: Int!
+  latitude: Float!
+  longitude: Float!
+  sessionId: String!
+  timestamp: DateTime!
+}
+
+type Mutation {
+  endSession(sessionId: String!): Session!
+  postLocation(battery: Int, lat: Float!, lng: Float!, sessionId: String!, tsutsykId: String!): Location!
+  startSession(sessionId: String!, tsutsykId: String!): Session!
+}
+
+type Query {
+  getActiveSession(tsutsykId: String!): Session
+  getSession(sessionId: String!): Session
+  getTsutsyk(id: ID!): Tsutsyk
+  getTsutsykHistory(sessionId: ID!): [Location!]!
+  getTsutsykSessions(tsutsykId: String!): [Session!]!
+}
+
+type Session {
+  endTime: DateTime
+  id: String!
+  locationCount: Int!
+  locations: [Location!]!
+  startTime: DateTime!
+  status: SessionStatus!
+  tsutsykId: String!
+}
+
+enum SessionStatus {
+  ACTIVE
+  COMPLETED
+}
+
+type Subscription {
+  locationUpdates(sessionId: ID!): Location!
+}
+
+type Tsutsyk {
+  id: ID!
+  sessions: [Session!]!
+}
