@@ -160,8 +160,7 @@ export function useTsutsykTracking(tsutsykId: string) {
     );
 
     // Most recent completed session (sessions are returned oldest-first)
-    const latestCompletedSession =
-        sessionsData?.getTsutsykSessions.at(-1) ?? null;
+    const latestCompletedSession = sessionsData?.getTsutsykSessions[0] ?? null;
 
     const session = activeSession ?? latestCompletedSession;
     const sessionId = session?.id ?? "";
