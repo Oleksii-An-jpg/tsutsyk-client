@@ -1,6 +1,6 @@
 'use client';
 
-import { FC, useState } from 'react';
+import {FC, useCallback, useState} from 'react';
 import {
     CloseButton,
     Drawer,
@@ -10,13 +10,13 @@ import {
     Box,
     Flex,
     Text,
-    Stack,
+    Stack, HStack, AbsoluteCenter,
 } from '@chakra-ui/react';
-import { BiMenu } from 'react-icons/bi';
+import {BiMenu, BiStopCircle} from 'react-icons/bi';
 import {Session, SessionStatus} from "@/app/_documents/__generated__/globalTypes.codegen";
-import {useTsutsykSessions} from "@/app/_lib/useTracker";
+import {useEndSession, useTsutsykSessions} from "@/app/_lib/useTracker";
 
-type SessionDrawerProps = {
+type SettingsProps = {
     tsutsykId: string;
     activeSessionId?: string;
     onSelectSession: (sessionId: string) => void;
@@ -52,7 +52,9 @@ const SessionItem: FC<{
     session: Session;
     isSelected: boolean;
     onSelect: () => void;
-}> = ({ session, isSelected, onSelect }) => {
+    stopping: boolean;
+    onStopSession: (sessionId: string) => void;
+}> = ({ session, isSelected, onSelect, onStopSession, stopping }) => {
     const isActive = session.status === SessionStatus.Active;
     const { date, time } = formatStartTime(session.startTime);
     const lastSeen = session.locations.at(-1)?.timestamp;
@@ -109,27 +111,42 @@ const SessionItem: FC<{
                     </Flex>
                 </Stack>
 
-                {/* Status badge */}
-                {isActive ? (
-                    <Badge colorPalette="green" size="sm" variant="subtle">
-                        <Box as="span" w={1.5} h={1.5} borderRadius="full" bg="green.500" display="inline-block" mr={1} style={{ animation: 'pulse 1.5s infinite' }} />
-                        Live
-                    </Badge>
-                ) : (
-                    <Badge colorPalette="gray" size="sm" variant="subtle">
-                        Done
-                    </Badge>
-                )}
+                <HStack>
+                    {/* Status badge */}
+                    {isActive ? (
+                        <>
+                            <Badge colorPalette="green" size="sm" variant="subtle">
+                                <Box as="span" w={1.5} h={1.5} borderRadius="full" bg="green.500" display="inline-block" mr={1} style={{ animation: 'pulse 1.5s infinite' }} />
+                                Live
+                            </Badge>
+                            <IconButton disabled={stopping} onClick={() => onStopSession(session.id)} variant="subtle" size="2xs">
+                                <BiStopCircle />
+                            </IconButton>
+                        </>
+                    ) : (
+                        <Badge colorPalette="gray" size="sm" variant="subtle">
+                            Done
+                        </Badge>
+                    )}
+                </HStack>
             </Flex>
         </Box>
     );
 };
 
-const SessionDrawer: FC<SessionDrawerProps> = ({ tsutsykId, activeSessionId, onSelectSession }) => {
+const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSession }) => {
     const { data, loading } = useTsutsykSessions(tsutsykId);
+    const [mutate, { loading: stopping }] = useEndSession();
     const [open, setOpen] = useState(false);
 
     const sessions = data?.getTsutsykSessions ?? [];
+    const stopSession = useCallback((sessionId: string) => {
+        return mutate({
+            variables: {
+                sessionId
+            }
+        })
+    }, [mutate])
 
     return (
         <Drawer.Root open={open} onOpenChange={(e) => setOpen(e.open)} placement="end">
@@ -169,7 +186,9 @@ const SessionDrawer: FC<SessionDrawerProps> = ({ tsutsykId, activeSessionId, onS
                                         <SessionItem
                                             key={session.id}
                                             session={session}
+                                            stopping={stopping}
                                             isSelected={session.id === activeSessionId}
+                                            onStopSession={stopSession}
                                             onSelect={() => {
                                                 onSelectSession(session.id);
                                                 setOpen(false);
@@ -190,4 +209,4 @@ const SessionDrawer: FC<SessionDrawerProps> = ({ tsutsykId, activeSessionId, onS
     );
 };
 
-export default SessionDrawer;
+export default Settings;

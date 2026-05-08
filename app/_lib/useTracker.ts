@@ -97,7 +97,7 @@ export function useStartSession() {
 
 export function useEndSession() {
     return useMutation<EndSessionMutation, EndSessionMutationVariables>(MUTATION_END_SESSION, {
-        refetchQueries: ["GetActiveSession", "GetTsutsykSessions"],
+        refetchQueries: [QUERY_ACTIVE_SESSION, QUERY_TSUTSYK_SESSIONS],
     });
 }
 
