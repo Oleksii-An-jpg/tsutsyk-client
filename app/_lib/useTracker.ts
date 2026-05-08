@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
 import { makeVar as makeLove } from '@apollo/client'
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
     TsutsykSessionsQuery,
@@ -43,6 +43,7 @@ import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 
 type Me = {
     position: google.maps.LatLngLiteral
+    geolocationAllowed: boolean;
     name: string
     completed: boolean
 }
@@ -50,6 +51,7 @@ type Me = {
 export const me = makeLove<Me>({
     name: 'John Doe',
     completed: false,
+    geolocationAllowed: false,
     position: {
         lat: 46.4600902,
         lng: 30.5469775
@@ -73,13 +75,47 @@ export function useSession(sessionId: string) {
 }
 
 export function useActiveSession(tsutsykId: string) {
-    return useQuery<ActiveSessionQuery, ActiveSessionQueryVariables>(
+    const result = useQuery<ActiveSessionQuery, ActiveSessionQueryVariables>(
         QUERY_ACTIVE_SESSION,
         {
             variables: { tsutsykId },
             skip: !tsutsykId,
         }
     );
+
+    useEffect(() => {
+        if (!result.data?.getActiveSession?.id) return;
+
+        const sessionId = result.data.getActiveSession.id;
+
+        const unsub = result.subscribeToMore<
+        LocationUpdatesSubscription,
+        LocationUpdatesSubscriptionVariables
+        >({
+            document: SUBSCRIPTION_LOCATION_UPDATES,
+            variables: { sessionId },
+            // @ts-expect-error: update
+            updateQuery: (prev, { subscriptionData }) => {
+                const loc = subscriptionData.data?.locationUpdates;
+                if (!loc || !prev.getActiveSession) return prev;
+
+                return {
+                    getActiveSession: {
+                        ...prev.getActiveSession,
+                        locationCount: prev.getActiveSession.locationCount! + 1,
+                        locations: [
+                            ...prev.getActiveSession.locations!,
+                            loc,
+                        ],
+                    },
+                };
+            },
+        });
+
+        return () => unsub();
+    }, [result.data?.getActiveSession?.id]);
+
+    return result;
 }
 
 export function useTsutsykHistory(sessionId: string) {

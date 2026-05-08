@@ -13,8 +13,23 @@ import Settings from "@/app/_components/tracker/settings";
 const TSUTSYK_ID = 'tsutsyk-odesa-01'
 
 const Tracker: FC = () => {
-    const { position, completed, name } = useReactiveVar(me);
+    const self = useReactiveVar(me);
+    const { position, completed, name } = self;
     useEffect(() => {
+        navigator.permissions?.query({ name: 'geolocation' }).then((result) => {
+            if (result.state === 'denied') me({
+                ...self,
+                geolocationAllowed: false
+            });
+
+            // React to permission changes (e.g. user unblocks in settings)
+            result.onchange = () => {
+                me({
+                    ...self,
+                    geolocationAllowed: result.state === 'denied'
+                });
+            };
+        });
         const id = navigator.geolocation.watchPosition((position) => {
             me({
                 position: {
@@ -22,7 +37,8 @@ const Tracker: FC = () => {
                     lng: position.coords.longitude
                 },
                 name,
-                completed: true
+                completed: true,
+                geolocationAllowed: true
             });
         }, (positionError) => {
             console.error(positionError);
@@ -30,7 +46,8 @@ const Tracker: FC = () => {
             me({
                 position,
                 name,
-                completed: true
+                completed: true,
+                geolocationAllowed: Boolean(positionError.PERMISSION_DENIED)
             })
         }, {
             maximumAge: 0,
@@ -38,7 +55,7 @@ const Tracker: FC = () => {
         });
 
         return () => navigator.geolocation.clearWatch(id)
-    }, []);
+    }, [name, position, self]);
     if (!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) {
         throw new Error('Google Maps api key is not provided')
     }
