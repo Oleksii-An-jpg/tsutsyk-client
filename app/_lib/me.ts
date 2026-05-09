@@ -4,6 +4,7 @@ import {User} from "firebase/auth";
 type Me = {
     position: google.maps.LatLngLiteral
     geolocationAllowed: boolean;
+    geolocationAvailable: boolean;
     user: User | null;
     tsutsykIds: string[];
     completed: boolean;
@@ -15,6 +16,7 @@ type Me = {
 export const me = makeLove<Me>({
     user: null,
     tsutsykIds: [],
+    geolocationAvailable: false,
     completed: false,
     authorised: false,
     checked: false,

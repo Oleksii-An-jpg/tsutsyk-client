@@ -1,5 +1,5 @@
 import {FC} from "react";
-import {Avatar, Circle, Float} from "@chakra-ui/react";
+import {Avatar, Status, Float} from "@chakra-ui/react";
 import {AdvancedMarker} from "@vis.gl/react-google-maps";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 import {ringCss} from "@/app/_components/tracker/ring";
@@ -18,12 +18,9 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, isLive }) => {
             <Avatar.Fallback name="Карематик" />
             <Avatar.Image src="/karemat.JPG" />
             <Float placement="bottom-end" offsetX="1" offsetY="1">
-                <Circle
-                    bg={ isLive ? 'green.500' : 'red.500' }
-                    size="8px"
-                    outline="0.2em solid"
-                    outlineColor="bg"
-                />
+                <Status.Root colorPalette={isLive ? 'green' : 'red'}>
+                    <Status.Indicator />
+                </Status.Root>
             </Float>
         </Avatar.Root>
     </AdvancedMarker>
