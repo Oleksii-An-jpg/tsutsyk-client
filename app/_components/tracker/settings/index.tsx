@@ -192,7 +192,6 @@ const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSessi
                                             onStopSession={stopSession}
                                             onSelect={() => {
                                                 onSelectSession(session.id);
-                                                setOpen(false);
                                             }}
                                         />
                                     ))}
