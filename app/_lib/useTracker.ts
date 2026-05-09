@@ -1,6 +1,5 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
-import { makeVar as makeLove } from '@apollo/client'
 import { useState, useEffect } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
@@ -40,23 +39,6 @@ import {
     LocationUpdatesSubscriptionVariables
 } from "@/app/_documents/__generated__/SUBSCRIPTION_LOCATION_UPDATES.codegen";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
-
-type Me = {
-    position: google.maps.LatLngLiteral
-    geolocationAllowed: boolean;
-    name: string
-    completed: boolean
-}
-
-export const me = makeLove<Me>({
-    name: 'John Doe',
-    completed: false,
-    geolocationAllowed: false,
-    position: {
-        lat: 46.4600902,
-        lng: 30.5469775
-    }
-})
 
 // ─── Queries ──────────────────────────────────────────────────────────────
 
@@ -99,6 +81,7 @@ export function useActiveSession(tsutsykId: string) {
                 const loc = subscriptionData.data?.locationUpdates;
                 if (!loc || !prev.getActiveSession) return prev;
 
+                console.log(loc);
                 return {
                     getActiveSession: {
                         ...prev.getActiveSession,
@@ -113,7 +96,7 @@ export function useActiveSession(tsutsykId: string) {
         });
 
         return () => unsub();
-    }, [result.data?.getActiveSession?.id]);
+    }, [result, result.data?.getActiveSession?.id]);
 
     return result;
 }

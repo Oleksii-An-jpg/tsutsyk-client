@@ -3,7 +3,7 @@ import {ButtonGroup, IconButton} from "@chakra-ui/react";
 import {BiBody, BiSolidDog} from "react-icons/bi";
 import {useMap} from "@vis.gl/react-google-maps";
 import {useReactiveVar} from "@apollo/client/react";
-import {me} from '@/app/_lib/useTracker'
+import {me} from "@/app/_lib/me";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 
 type ControlsProps = {

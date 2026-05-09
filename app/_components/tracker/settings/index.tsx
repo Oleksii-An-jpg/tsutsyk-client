@@ -10,11 +10,12 @@ import {
     Box,
     Flex,
     Text,
-    Stack, HStack, AbsoluteCenter,
+    Stack, HStack, Button,
 } from '@chakra-ui/react';
-import {BiMenu, BiStopCircle} from 'react-icons/bi';
+import {BiLogOut, BiMenu, BiStopCircle} from 'react-icons/bi';
 import {Session, SessionStatus} from "@/app/_documents/__generated__/globalTypes.codegen";
 import {useEndSession, useTsutsykSessions} from "@/app/_lib/useTracker";
+import {auth} from "@/app/_lib/firebase";
 
 type SettingsProps = {
     tsutsykId: string;
@@ -198,6 +199,11 @@ const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSessi
                                 </Stack>
                             )}
                         </Drawer.Body>
+                        <Drawer.Footer>
+                            <Button variant="outline" size="xs" onClick={() => auth.signOut()}>
+                                <BiLogOut /> Sign out
+                            </Button>
+                        </Drawer.Footer>
 
                         <Drawer.CloseTrigger asChild>
                             <CloseButton size="sm" position="absolute" top={3} right={3} />
