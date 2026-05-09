@@ -21,7 +21,7 @@ export default function Layout({
                     <Alert.Content>
                         <Alert.Title>Доступ заборонено</Alert.Title>
                         <Alert.Description>
-                            Вам потрібні права адміністратора для доступу до редагування. Для отримання таких прав, зв&#39;яжіться з <ChakraLink variant="underline" asChild><Link href="mailto:voodoo.spr@gmail.com"><Text as="b">voodoo.spr@gmail.com</Text></Link></ChakraLink>
+                            Вам потрібні права <Text as="b">ґазди</Text> для доступу до вашого цуцика. Для отримання таких прав, зв&#39;яжіться з <ChakraLink variant="underline" asChild><Link href="mailto:voodoo.spr@gmail.com"><Text as="b">voodoo.spr@gmail.com</Text></Link></ChakraLink>
                         </Alert.Description>
                     </Alert.Content>
                     <Button

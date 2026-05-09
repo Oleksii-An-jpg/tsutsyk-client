@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
         name: 'Tsutsyk Live',
         short_name: 'Tsutsyk Live',
         description: 'An app to track your beloved one',
-        start_url: '/',
+        start_url: '/me',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#000000',

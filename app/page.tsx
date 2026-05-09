@@ -4,7 +4,7 @@ import {adminAuth} from "@/app/_lib/admin";
 
 export default async function Home() {
     // await adminAuth
-    //     .setCustomUserClaims('H51soFjA3sOZcsyQlLB23lYZYEn2', {
+    //     .setCustomUserClaims('rE62P2bwxPV7M4QcHoVMvzM4uVq2', {
     //         role: 'admin',
     //         tsutsykIds: ['tsutsyk-odesa-01']
     //     });
