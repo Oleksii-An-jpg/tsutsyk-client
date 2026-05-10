@@ -30,6 +30,15 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+        <head>
+            {/* Preconnect to Firebase auth and Google Maps — overlaps TLS handshakes
+                with React hydration, especially valuable in PWA standalone mode where
+                there is no shared connection pool with the browser. */}
+            <link rel="preconnect" href="https://securetoken.googleapis.com" />
+            <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+            <link rel="preconnect" href="https://maps.googleapis.com" />
+            <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
+        </head>
         <Provider>
             <ChakraProvider>
                 <body className="min-h-full flex flex-col">{children}</body>
