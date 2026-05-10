@@ -41,7 +41,7 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
                         geolocationAvailable: err.code !== err.POSITION_UNAVAILABLE,
                     });
                 },
-                { maximumAge: 0, timeout: 10000 }
+                { maximumAge: 10000, timeout: 10000 }
             );
         };
 
