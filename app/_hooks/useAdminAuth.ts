@@ -25,7 +25,7 @@ export function useAdminAuth(): AdminAuthState {
 
             if (user) {
                 try {
-                    const idTokenResult = await user.getIdTokenResult(true);
+                    const idTokenResult = await user.getIdTokenResult();
                     const hasAdminRole = idTokenResult.claims.role === 'admin';
                     const tsutsykIds = Array.isArray(idTokenResult.claims.tsutsykIds) ? idTokenResult.claims.tsutsykIds : [];
                     setTrue();
