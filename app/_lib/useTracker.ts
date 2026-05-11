@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
-import { Reference } from "@apollo/client";
+import { Reference, StoreObject } from "@apollo/client";
 import { useState } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
@@ -90,7 +90,7 @@ export function useActiveSession(tsutsykId: string) {
                     id: client.cache.identify({ __typename: 'Session', id: sessionId }),
                     fields: {
                         locationCount: (existing: number) => existing + 1,
-                        locations: (existingRefs: Reference[]) => [...existingRefs, locRef],
+                        locations: (existingRefs: ReadonlyArray<Reference | StoreObject>) => [...existingRefs, locRef],
                     },
                 });
             },
