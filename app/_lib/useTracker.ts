@@ -62,15 +62,18 @@ export function useActiveSession(tsutsykId: string) {
         {
             variables: { tsutsykId },
             skip: !tsutsykId,
+            // Poll so the client detects new sessions auto-created by the backend
+            pollInterval: 30_000,
         }
     );
 
+    const subscribeToMore = result.subscribeToMore;
+    const sessionId = result.data?.getActiveSession?.id;
+
     useEffect(() => {
-        if (!result.data?.getActiveSession?.id) return;
+        if (!sessionId) return;
 
-        const sessionId = result.data.getActiveSession.id;
-
-        const unsub = result.subscribeToMore<
+        const unsub = subscribeToMore<
         LocationUpdatesSubscription,
         LocationUpdatesSubscriptionVariables
         >({
@@ -81,7 +84,6 @@ export function useActiveSession(tsutsykId: string) {
                 const loc = subscriptionData.data?.locationUpdates;
                 if (!loc || !prev.getActiveSession) return prev;
 
-                console.log(loc);
                 return {
                     getActiveSession: {
                         ...prev.getActiveSession,
@@ -96,7 +98,7 @@ export function useActiveSession(tsutsykId: string) {
         });
 
         return () => unsub();
-    }, [result, result.data?.getActiveSession?.id]);
+    }, [subscribeToMore, sessionId]);
 
     return result;
 }
