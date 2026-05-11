@@ -1,6 +1,7 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
-import { useState, useEffect } from "react";
+import { Reference } from "@apollo/client";
+import { useState } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
     TsutsykSessionsQuery,
@@ -34,6 +35,7 @@ import {
     PostLocationMutationVariables
 } from "@/app/_documents/__generated__/MUTATION_POST_LOCATION.codegen";
 import {SUBSCRIPTION_LOCATION_UPDATES} from "@/app/_documents/SUBSCRIPTION_LOCATION_UPDATES";
+import {LOCATION_FRAGMENT} from "@/app/_documents/fragments/LOCATION_FRAGMENT";
 import {
     LocationUpdatesSubscription,
     LocationUpdatesSubscriptionVariables
@@ -67,38 +69,33 @@ export function useActiveSession(tsutsykId: string) {
         }
     );
 
-    const subscribeToMore = result.subscribeToMore;
     const sessionId = result.data?.getActiveSession?.id;
 
-    useEffect(() => {
-        if (!sessionId) return;
+    useSubscription<LocationUpdatesSubscription, LocationUpdatesSubscriptionVariables>(
+        SUBSCRIPTION_LOCATION_UPDATES,
+        {
+            variables: { sessionId: sessionId ?? '' },
+            skip: !sessionId,
+            onData: ({ client, data }) => {
+                const loc = data.data?.locationUpdates;
+                if (!loc || !sessionId) return;
 
-        const unsub = subscribeToMore<
-        LocationUpdatesSubscription,
-        LocationUpdatesSubscriptionVariables
-        >({
-            document: SUBSCRIPTION_LOCATION_UPDATES,
-            variables: { sessionId },
-            // @ts-expect-error: update
-            updateQuery: (prev, { subscriptionData }) => {
-                const loc = subscriptionData.data?.locationUpdates;
-                if (!loc || !prev.getActiveSession) return prev;
+                const locRef = client.cache.writeFragment({
+                    data: loc,
+                    fragment: LOCATION_FRAGMENT,
+                    fragmentName: 'LocationFragment',
+                });
 
-                return {
-                    getActiveSession: {
-                        ...prev.getActiveSession,
-                        locationCount: prev.getActiveSession.locationCount! + 1,
-                        locations: [
-                            ...prev.getActiveSession.locations!,
-                            loc,
-                        ],
+                client.cache.modify({
+                    id: client.cache.identify({ __typename: 'Session', id: sessionId }),
+                    fields: {
+                        locationCount: (existing: number) => existing + 1,
+                        locations: (existingRefs: Reference[]) => [...existingRefs, locRef],
                     },
-                };
+                });
             },
-        });
-
-        return () => unsub();
-    }, [subscribeToMore, sessionId]);
+        }
+    );
 
     return result;
 }
