@@ -45,18 +45,43 @@ const httpLink = new HttpLink({ uri: HTTP_URL });
 
 // ─── WebSocket link (subscriptions) — only on client ────────────────────
 function makeWsLink() {
-    return new GraphQLWsLink(
-        createClient({
-            url: WS_URL,
-            retryAttempts: 10,
-            shouldRetry: () => true,
-            on: {
-                connected: () => console.log("[WS] Connected"),
-                closed: () => console.log("[WS] Closed"),
-                error: (err) => console.error("[WS] Error", err),
+    let activeSocket: WebSocket | null = null;
+
+    const wsClient = createClient({
+        url: WS_URL,
+        keepAlive: 10_000,       // ping every 10 s — detects silently dead connections
+        retryAttempts: Infinity, // never give up reconnecting
+        shouldRetry: () => true,
+        on: {
+            connected: (socket) => {
+                activeSocket = socket as WebSocket;
+                console.log("[WS] Connected");
             },
-        })
-    );
+            closed: () => {
+                activeSocket = null;
+                console.log("[WS] Closed");
+            },
+            error: (err) => console.error("[WS] Error", err),
+        },
+    });
+
+    // On mobile/PWA the OS kills the socket when the screen locks or the app
+    // goes to the background without sending a close frame, so the client has
+    // no idea the connection is dead until the next keepAlive ping fires.
+    // Closing the socket proactively on visibility/online forces graphql-ws to
+    // reconnect immediately instead of waiting up to keepAlive ms.
+    const reconnect = () => {
+        if (activeSocket?.readyState === WebSocket.OPEN) {
+            activeSocket.close(4000, 'reconnect');
+        }
+    };
+
+    window.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reconnect();
+    });
+    window.addEventListener('online', reconnect);
+
+    return new GraphQLWsLink(wsClient);
 }
 
 // ─── Split: subscriptions → WS, everything else → HTTP ──────────────────
@@ -84,20 +109,7 @@ function makeLink() {
 }
 
 // ─── Cache ───────────────────────────────────────────────────────────────
-const cache = new InMemoryCache({
-    typePolicies: {
-        Session: {
-            fields: {
-                // Merge incoming locations into the existing array
-                locations: {
-                    merge(existing: unknown[] = [], incoming: unknown[]) {
-                        return [...existing, ...incoming];
-                    },
-                },
-            },
-        },
-    },
-});
+const cache = new InMemoryCache();
 
 export function createApolloClient() {
     return new ApolloClient({

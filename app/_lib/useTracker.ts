@@ -1,6 +1,5 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
-import { Reference, StoreObject } from "@apollo/client";
 import { useState } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
@@ -35,7 +34,6 @@ import {
     PostLocationMutationVariables
 } from "@/app/_documents/__generated__/MUTATION_POST_LOCATION.codegen";
 import {SUBSCRIPTION_LOCATION_UPDATES} from "@/app/_documents/SUBSCRIPTION_LOCATION_UPDATES";
-import {LOCATION_FRAGMENT} from "@/app/_documents/fragments/LOCATION_FRAGMENT";
 import {
     LocationUpdatesSubscription,
     LocationUpdatesSubscriptionVariables
@@ -59,47 +57,14 @@ export function useSession(sessionId: string) {
 }
 
 export function useActiveSession(tsutsykId: string) {
-    const result = useQuery<ActiveSessionQuery, ActiveSessionQueryVariables>(
+    return useQuery<ActiveSessionQuery, ActiveSessionQueryVariables>(
         QUERY_ACTIVE_SESSION,
         {
             variables: { tsutsykId },
             skip: !tsutsykId,
-            // Poll so the client detects new sessions auto-created by the backend
             pollInterval: 30_000,
         }
     );
-
-    const sessionId = result.data?.getActiveSession?.id;
-
-    useSubscription<LocationUpdatesSubscription, LocationUpdatesSubscriptionVariables>(
-        SUBSCRIPTION_LOCATION_UPDATES,
-        {
-            variables: { sessionId: sessionId ?? '' },
-            skip: !sessionId,
-            onData: ({ client, data }) => {
-                const loc = data.data?.locationUpdates;
-                if (!loc || !sessionId) return;
-
-                const locRef = client.cache.writeFragment({
-                    data: loc,
-                    fragment: LOCATION_FRAGMENT,
-                    fragmentName: 'LocationFragment',
-                });
-
-                if (locRef) {
-                    client.cache.modify({
-                        id: client.cache.identify({ __typename: 'Session', id: sessionId }),
-                        fields: {
-                            locationCount: (existing: number) => existing + 1,
-                            locations: (existingRefs: ReadonlyArray<Reference | StoreObject>) => [...existingRefs, locRef],
-                        },
-                    });
-                }
-            },
-        }
-    );
-
-    return result;
 }
 
 export function useTsutsykHistory(sessionId: string) {

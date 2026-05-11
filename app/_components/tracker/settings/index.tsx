@@ -95,10 +95,6 @@ const SessionItem: FC<{
                     {/* Stats row */}
                     <Flex align="center" gap={2}>
                         <Text fontSize="xs" color="gray.400">
-                            {session.locationCount} pts
-                        </Text>
-                        <Text fontSize="xs" color="gray.300">·</Text>
-                        <Text fontSize="xs" color="gray.400">
                             {formatDuration(session.startTime, session.endTime)}
                         </Text>
                         {lastSeen && (
