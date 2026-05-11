@@ -95,10 +95,6 @@ const SessionItem: FC<{
                     {/* Stats row */}
                     <Flex align="center" gap={2}>
                         <Text fontSize="xs" color="gray.400">
-                            {session.locationCount} pts
-                        </Text>
-                        <Text fontSize="xs" color="gray.300">·</Text>
-                        <Text fontSize="xs" color="gray.400">
                             {formatDuration(session.startTime, session.endTime)}
                         </Text>
                         {lastSeen && (
@@ -136,7 +132,7 @@ const SessionItem: FC<{
 };
 
 const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSession }) => {
-    const { data, loading } = useTsutsykSessions(tsutsykId);
+    const { data, loading, refetch } = useTsutsykSessions(tsutsykId);
     const [mutate, { loading: stopping }] = useEndSession();
     const [open, setOpen] = useState(false);
 
@@ -150,7 +146,7 @@ const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSessi
     }, [mutate])
 
     return (
-        <Drawer.Root open={open} onOpenChange={(e) => setOpen(e.open)} placement="end">
+        <Drawer.Root open={open} onOpenChange={(e) => { setOpen(e.open); if (e.open) refetch(); }} placement="end">
             <Drawer.Trigger asChild>
                 <IconButton size="sm" colorPalette="gray" aria-label="Open sessions">
                     <BiMenu />

@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
     TsutsykSessionsQuery,
@@ -62,41 +62,19 @@ export function useActiveSession(tsutsykId: string) {
         {
             variables: { tsutsykId },
             skip: !tsutsykId,
+            pollInterval: 30_000,
         }
     );
 
-    useEffect(() => {
-        if (!result.data?.getActiveSession?.id) return;
+    const sessionId = result.data?.getActiveSession?.id;
 
-        const sessionId = result.data.getActiveSession.id;
-
-        const unsub = result.subscribeToMore<
-        LocationUpdatesSubscription,
-        LocationUpdatesSubscriptionVariables
-        >({
-            document: SUBSCRIPTION_LOCATION_UPDATES,
-            variables: { sessionId },
-            // @ts-expect-error: update
-            updateQuery: (prev, { subscriptionData }) => {
-                const loc = subscriptionData.data?.locationUpdates;
-                if (!loc || !prev.getActiveSession) return prev;
-
-                console.log(loc);
-                return {
-                    getActiveSession: {
-                        ...prev.getActiveSession,
-                        locationCount: prev.getActiveSession.locationCount! + 1,
-                        locations: [
-                            ...prev.getActiveSession.locations!,
-                            loc,
-                        ],
-                    },
-                };
-            },
-        });
-
-        return () => unsub();
-    }, [result, result.data?.getActiveSession?.id]);
+    useSubscription<LocationUpdatesSubscription, LocationUpdatesSubscriptionVariables>(
+        SUBSCRIPTION_LOCATION_UPDATES,
+        {
+            variables: { sessionId: sessionId ?? '' },
+            skip: !sessionId,
+        }
+    );
 
     return result;
 }

@@ -45,18 +45,19 @@ const httpLink = new HttpLink({ uri: HTTP_URL });
 
 // ─── WebSocket link (subscriptions) — only on client ────────────────────
 function makeWsLink() {
-    return new GraphQLWsLink(
-        createClient({
-            url: WS_URL,
-            retryAttempts: 10,
-            shouldRetry: () => true,
-            on: {
-                connected: () => console.log("[WS] Connected"),
-                closed: () => console.log("[WS] Closed"),
-                error: (err) => console.error("[WS] Error", err),
-            },
-        })
-    );
+    const wsClient = createClient({
+        url: WS_URL,
+        keepAlive: 10_000,       // ping every 10 s — detects silently dead connections
+        retryAttempts: Infinity, // never give up reconnecting
+        shouldRetry: () => true,
+        on: {
+            connected: () => console.log("[WS] Connected"),
+            closed: () => console.log("[WS] Closed"),
+            error: (err) => console.error("[WS] Error", err),
+        },
+    });
+
+    return new GraphQLWsLink(wsClient);
 }
 
 // ─── Split: subscriptions → WS, everything else → HTTP ──────────────────
@@ -84,20 +85,7 @@ function makeLink() {
 }
 
 // ─── Cache ───────────────────────────────────────────────────────────────
-const cache = new InMemoryCache({
-    typePolicies: {
-        Session: {
-            fields: {
-                // Merge incoming locations into the existing array
-                locations: {
-                    merge(existing: unknown[] = [], incoming: unknown[]) {
-                        return [...existing, ...incoming];
-                    },
-                },
-            },
-        },
-    },
-});
+const cache = new InMemoryCache();
 
 export function createApolloClient() {
     return new ApolloClient({
