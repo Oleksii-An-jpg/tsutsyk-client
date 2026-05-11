@@ -57,7 +57,7 @@ export function useSession(sessionId: string) {
 }
 
 export function useActiveSession(tsutsykId: string) {
-    return useQuery<ActiveSessionQuery, ActiveSessionQueryVariables>(
+    const result = useQuery<ActiveSessionQuery, ActiveSessionQueryVariables>(
         QUERY_ACTIVE_SESSION,
         {
             variables: { tsutsykId },
@@ -65,6 +65,18 @@ export function useActiveSession(tsutsykId: string) {
             pollInterval: 30_000,
         }
     );
+
+    const sessionId = result.data?.getActiveSession?.id;
+
+    useSubscription<LocationUpdatesSubscription, LocationUpdatesSubscriptionVariables>(
+        SUBSCRIPTION_LOCATION_UPDATES,
+        {
+            variables: { sessionId: sessionId ?? '' },
+            skip: !sessionId,
+        }
+    );
+
+    return result;
 }
 
 export function useTsutsykHistory(sessionId: string) {
