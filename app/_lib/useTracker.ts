@@ -86,13 +86,15 @@ export function useActiveSession(tsutsykId: string) {
                     fragmentName: 'LocationFragment',
                 });
 
-                client.cache.modify({
-                    id: client.cache.identify({ __typename: 'Session', id: sessionId }),
-                    fields: {
-                        locationCount: (existing: number) => existing + 1,
-                        locations: (existingRefs: ReadonlyArray<Reference | StoreObject>) => [...existingRefs, locRef],
-                    },
-                });
+                if (locRef) {
+                    client.cache.modify({
+                        id: client.cache.identify({ __typename: 'Session', id: sessionId }),
+                        fields: {
+                            locationCount: (existing: number) => existing + 1,
+                            locations: (existingRefs: ReadonlyArray<Reference | StoreObject>) => [...existingRefs, locRef],
+                        },
+                    });
+                }
             },
         }
     );
