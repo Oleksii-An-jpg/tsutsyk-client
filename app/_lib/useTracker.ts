@@ -1,6 +1,6 @@
 "use client";
 import { useQuery, useMutation, useSubscription } from "@apollo/client/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { QUERY_TSUTSYK_SESSIONS }  from "@/app/_documents/QUERY_TSUTSYK_SESSIONS";
 import {
     TsutsykSessionsQuery,
@@ -131,7 +131,22 @@ export function useLiveTracking(sessionId: string) {
 
     // Derive — never copy server data into state
     const historyPoints = historyData?.getTsutsykHistory ?? [];
-    const trail = [...historyPoints, ...livePoints];
+
+    // When history is refetched (e.g. on visibilitychange) it may now include
+    // points that livePoints already received via subscription. Appending stale
+    // livePoints after the newer history would place the marker at an old
+    // position and draw a zigzag trail. Filter by ID (auto-increment) so only
+    // genuinely new live points are appended.
+    const historyIdSet = useMemo(
+        () => new Set(historyPoints.map(p => p.id)),
+        [historyPoints]
+    );
+    const dedupedLivePoints = useMemo(
+        () => livePoints.filter(p => !historyIdSet.has(p.id)),
+        [livePoints, historyIdSet]
+    );
+
+    const trail = [...historyPoints, ...dedupedLivePoints];
     const latestLocation = trail.at(-1) ?? null;
 
     return { trail, latestLocation, historyLoading, error };
