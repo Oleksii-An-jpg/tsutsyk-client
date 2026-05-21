@@ -1,19 +1,36 @@
-import {FC} from "react";
+import {FC, useCallback} from "react";
 import {ButtonGroup, IconButton} from "@chakra-ui/react";
-import {BiBody, BiSolidDog} from "react-icons/bi";
+import {BiBody, BiSolidDog, BiStopCircle} from "react-icons/bi";
 import {useMap} from "@vis.gl/react-google-maps";
 import {useReactiveVar} from "@apollo/client/react";
 import {me} from "@/app/_lib/me";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
+import {useEndSession} from "@/app/_lib/useTracker";
+import {SessionFragmentFragment} from "@/app/_documents/fragments/__generated__/SESSION_FRAGMENT.codegen";
 
 type ControlsProps = {
     location?: Location | null;
+    session?: SessionFragmentFragment | null
 }
 
-const Controls: FC<ControlsProps> = ({ location }) => {
+const Controls: FC<ControlsProps> = ({ location, session }) => {
     const map = useMap();
     const {position} = useReactiveVar(me);
+    const [mutate, { loading: stopping }] = useEndSession();
+
+    const stopSession = useCallback(() => {
+        if (session?.id) {
+            return mutate({
+                variables: {
+                    sessionId: session?.id
+                }
+            })
+        }
+    }, [mutate, session?.id])
     return <ButtonGroup orientation="vertical" size="sm" variant="solid">
+        <IconButton rounded="full" colorPalette="red" onClick={stopSession} loading={stopping}>
+            <BiStopCircle />
+        </IconButton>
         <IconButton disabled={!location} onClick={() => {
             if (location) {
                 map?.setCenter({

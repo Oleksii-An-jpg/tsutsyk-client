@@ -10,6 +10,16 @@ type TsutsykProps = {
     isLive: boolean;
 }
 
+function formatLastSeen(timestamp: string): string {
+    const diffMs = Date.now() - new Date(timestamp).getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1)  return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${Math.floor(diffHours / 24)}d ago`;
+}
+
 const Tsutsyk: FC<TsutsykProps> = ({ location, isLive }) => {
     return <AdvancedMarker position={{
         lat: location.latitude,
@@ -18,6 +28,11 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, isLive }) => {
         <Avatar.Root size="xs" css={ringCss} colorPalette="pink">
             <Avatar.Fallback name="Карематик" />
             <Avatar.Image src="/karemat.JPG" />
+            <Float placement="bottom-center" offsetY="-4">
+                <Badge colorPalette="blue">
+                    {formatLastSeen(location.timestamp)}
+                </Badge>
+            </Float>
             <Float placement="top-center" offsetY="-4">
                 <Badge colorPalette="green">
                     <BiSolidBatteryCharging />

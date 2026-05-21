@@ -121,7 +121,7 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
                 }} activeSessionId={session?.id} tsutsykId={tsutsykIds[0]} />
             </Box>
             <Box className="fixed bottom-4 right-4">
-                <Controls location={latestLocation} />
+                <Controls session={session} location={latestLocation} />
             </Box>
         </Map> : <AbsoluteCenter>
             <Spinner size="xl" />

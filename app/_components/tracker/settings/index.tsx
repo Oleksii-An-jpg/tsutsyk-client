@@ -132,21 +132,24 @@ const SessionItem: FC<{
 };
 
 const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSession }) => {
-    const { data, loading, refetch } = useTsutsykSessions(tsutsykId);
-    const [mutate, { loading: stopping }] = useEndSession();
+    // const { data, loading, refetch } = useTsutsykSessions(tsutsykId);
+    // const [mutate, { loading: stopping }] = useEndSession();
     const [open, setOpen] = useState(false);
 
-    const sessions = data?.getTsutsykSessions ?? [];
-    const stopSession = useCallback((sessionId: string) => {
-        return mutate({
-            variables: {
-                sessionId
-            }
-        })
-    }, [mutate])
+    // const sessions = data?.getTsutsykSessions ?? [];
+    // const stopSession = useCallback((sessionId: string) => {
+    //     return mutate({
+    //         variables: {
+    //             sessionId
+    //         }
+    //     })
+    // }, [mutate])
 
     return (
-        <Drawer.Root open={open} onOpenChange={(e) => { setOpen(e.open); if (e.open) refetch(); }} placement="end">
+        <Drawer.Root open={open} onOpenChange={(e) => {
+            setOpen(e.open);
+            // if (e.open) refetch();
+        }} placement="end">
             <Drawer.Trigger asChild>
                 <IconButton size="sm" colorPalette="gray" aria-label="Open sessions">
                     <BiMenu />
@@ -165,34 +168,34 @@ const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSessi
                         </Drawer.Header>
 
                         <Drawer.Body p={3} overflowY="auto">
-                            {loading ? (
-                                <Stack gap={2}>
-                                    {[...Array(4)].map((_, i) => (
-                                        <Box key={i} h="64px" borderRadius="lg" bg="gray.100" _dark={{ bg: 'gray.800' }}
-                                             style={{ animation: 'pulse 1.5s infinite', animationDelay: `${i * 0.1}s` }}
-                                        />
-                                    ))}
-                                </Stack>
-                            ) : sessions.length === 0 ? (
-                                <Flex h="full" align="center" justify="center" color="gray.400" fontSize="sm">
-                                    No sessions yet
-                                </Flex>
-                            ) : (
-                                <Stack gap={2}>
-                                    {sessions.map((session) => (
-                                        <SessionItem
-                                            key={session.id}
-                                            session={session}
-                                            stopping={stopping}
-                                            isSelected={session.id === activeSessionId}
-                                            onStopSession={stopSession}
-                                            onSelect={() => {
-                                                onSelectSession(session.id);
-                                            }}
-                                        />
-                                    ))}
-                                </Stack>
-                            )}
+                            {/*{loading ? (*/}
+                            {/*    <Stack gap={2}>*/}
+                            {/*        {[...Array(4)].map((_, i) => (*/}
+                            {/*            <Box key={i} h="64px" borderRadius="lg" bg="gray.100" _dark={{ bg: 'gray.800' }}*/}
+                            {/*                 style={{ animation: 'pulse 1.5s infinite', animationDelay: `${i * 0.1}s` }}*/}
+                            {/*            />*/}
+                            {/*        ))}*/}
+                            {/*    </Stack>*/}
+                            {/*) : sessions.length === 0 ? (*/}
+                            {/*    <Flex h="full" align="center" justify="center" color="gray.400" fontSize="sm">*/}
+                            {/*        No sessions yet*/}
+                            {/*    </Flex>*/}
+                            {/*) : (*/}
+                            {/*    <Stack gap={2}>*/}
+                            {/*        {sessions.map((session) => (*/}
+                            {/*            <SessionItem*/}
+                            {/*                key={session.id}*/}
+                            {/*                session={session}*/}
+                            {/*                stopping={stopping}*/}
+                            {/*                isSelected={session.id === activeSessionId}*/}
+                            {/*                onStopSession={stopSession}*/}
+                            {/*                onSelect={() => {*/}
+                            {/*                    onSelectSession(session.id);*/}
+                            {/*                }}*/}
+                            {/*            />*/}
+                            {/*        ))}*/}
+                            {/*    </Stack>*/}
+                            {/*)}*/}
                         </Drawer.Body>
                         <Drawer.Footer>
                             <Button variant="outline" size="xs" onClick={() => auth.signOut()}>
