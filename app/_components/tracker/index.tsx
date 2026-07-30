@@ -1,7 +1,7 @@
 'use client';
 import {APIProvider, Map} from '@vis.gl/react-google-maps';
 import {FC, useEffect} from "react";
-import {useTsutsykTracking} from "@/app/_lib/useTracker";
+import {useTsutsyk, useTsutsykTracking} from "@/app/_lib/useTracker";
 import Me from './me'
 import Tsutsyk from "@/app/_components/tracker/tsutsyk";
 import Track from "@/app/_components/tracker/track";
@@ -78,6 +78,8 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
     }
 
     const { session, trail, isLive, latestLocation } = useTsutsykTracking(tsutsykIds[0]);
+    const { data: tsutsykData } = useTsutsyk(tsutsykIds[0]);
+    const tsutsyk = tsutsykData?.getTsutsyk;
 
     if (completed && !geolocationAllowed) {
         return  <AbsoluteCenter textAlign="center" px={8}>
@@ -114,7 +116,12 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
             <Me />
             <Track trail={trail} />
             {latestLocation && (
-                <Tsutsyk location={latestLocation} isLive={isLive} />
+                <Tsutsyk
+                    location={latestLocation}
+                    isLive={isLive}
+                    photoUrl={tsutsyk?.photoUrl}
+                    alertDistanceMeters={tsutsyk?.alertDistanceMeters}
+                />
             )}
             <Box className="fixed top-4 right-4">
                 <Settings onSelectSession={(sessionId) => {

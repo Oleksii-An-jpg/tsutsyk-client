@@ -38,6 +38,16 @@ import {
     LocationUpdatesSubscription,
     LocationUpdatesSubscriptionVariables
 } from "@/app/_documents/__generated__/SUBSCRIPTION_LOCATION_UPDATES.codegen";
+import {QUERY_TSUTSYK} from "@/app/_documents/QUERY_TSUTSYK";
+import {
+    TsutsykQuery,
+    TsutsykQueryVariables
+} from "@/app/_documents/__generated__/QUERY_TSUTSYK.codegen";
+import {MUTATION_UPDATE_TSUTSYK} from "@/app/_documents/MUTATION_UPDATE_TSUTSYK";
+import {
+    UpdateTsutsykMutation,
+    UpdateTsutsykMutationVariables
+} from "@/app/_documents/__generated__/MUTATION_UPDATE_TSUTSYK.codegen";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 
 // ─── Queries ──────────────────────────────────────────────────────────────
@@ -79,6 +89,13 @@ export function useActiveSession(tsutsykId: string) {
     return result;
 }
 
+export function useTsutsyk(tsutsykId: string) {
+    return useQuery<TsutsykQuery, TsutsykQueryVariables>(
+        QUERY_TSUTSYK,
+        { variables: { id: tsutsykId }, skip: !tsutsykId }
+    );
+}
+
 export function useTsutsykHistory(sessionId: string) {
     return useQuery<TsutsykHistoryQuery, TsutsykHistoryQueryVariables>(
         QUERY_TSUTSYK_HISTORY,
@@ -100,6 +117,10 @@ export function useEndSession() {
 
 export function usePostLocation() {
     return useMutation<PostLocationMutation, PostLocationMutationVariables>(MUTATION_POST_LOCATION);
+}
+
+export function useUpdateTsutsyk() {
+    return useMutation<UpdateTsutsykMutation, UpdateTsutsykMutationVariables>(MUTATION_UPDATE_TSUTSYK);
 }
 
 export function useLiveTracking(sessionId: string) {

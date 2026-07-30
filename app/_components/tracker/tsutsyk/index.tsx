@@ -11,6 +11,8 @@ import {sendNotification} from "@/app/actions";
 type TsutsykProps = {
     location: Location;
     isLive: boolean;
+    photoUrl?: string | null;
+    alertDistanceMeters?: number | null;
 }
 
 function formatLastSeen(timestamp: string): string {
@@ -30,14 +32,14 @@ function distanceFromLocation(location: Location, point: google.maps.LatLngLiter
     );
 }
 
-const Tsutsyk: FC<TsutsykProps> = ({ location, isLive }) => {
+const Tsutsyk: FC<TsutsykProps> = ({ location, isLive, photoUrl, alertDistanceMeters }) => {
     const { position } = useReactiveVar(me);
 
     useEffect(() => {
-        if (location && position && distanceFromLocation(location, position) > 100) {
+        if (location && position && alertDistanceMeters != null && distanceFromLocation(location, position) > alertDistanceMeters) {
             sendNotification('Ой-ой! 🐶 Цуцик забіг задалеко 🐾').finally(console.log)
         }
-    }, [location, position]);
+    }, [location, position, alertDistanceMeters]);
 
     return <AdvancedMarker position={{
         lat: location.latitude,
@@ -45,7 +47,7 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, isLive }) => {
     }}>
         <Avatar.Root size="xs" css={ringCss} colorPalette="pink">
             <Avatar.Fallback name="Карематик" />
-            <Avatar.Image src="/karemat.JPG" />
+            {photoUrl && <Avatar.Image src={photoUrl} />}
             <Float placement="bottom-center" offsetY="-4">
                 <Badge colorPalette="blue">
                     {formatLastSeen(location.timestamp)}
