@@ -101,7 +101,8 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
             </Alert.Root>
         </AbsoluteCenter>
     }
-    return <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
+
+    return <APIProvider libraries={['geometry']} apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}>
         {completed ? <Map
             mapId={'bf51a910020fa25a'}
             style={{width: '100vw', height: '100vh'}}
@@ -121,7 +122,7 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
                 }} activeSessionId={session?.id} tsutsykId={tsutsykIds[0]} />
             </Box>
             <Box className="fixed bottom-4 right-4">
-                <Controls session={session} location={latestLocation} />
+                <Controls session={session} userAgent={userAgent} location={latestLocation} />
             </Box>
         </Map> : <AbsoluteCenter>
             <Spinner size="xl" />

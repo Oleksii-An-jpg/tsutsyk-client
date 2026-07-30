@@ -1,9 +1,12 @@
-import {FC} from "react";
+import {FC, useEffect} from "react";
 import {Avatar, Status, Float, Badge} from "@chakra-ui/react";
 import {AdvancedMarker} from "@vis.gl/react-google-maps";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 import {ringCss} from "@/app/_components/tracker/ring";
 import {BiSolidBatteryCharging} from "react-icons/bi";
+import {useReactiveVar} from "@apollo/client/react";
+import {me} from "@/app/_lib/me";
+import {sendNotification} from "@/app/actions";
 
 type TsutsykProps = {
     location: Location;
@@ -20,7 +23,22 @@ function formatLastSeen(timestamp: string): string {
     return `${Math.floor(diffHours / 24)}d ago`;
 }
 
+function distanceFromLocation(location: Location, point: google.maps.LatLngLiteral): number {
+    return google.maps.geometry.spherical.computeDistanceBetween(
+        { lat: location.latitude, lng: location.longitude },
+        point
+    );
+}
+
 const Tsutsyk: FC<TsutsykProps> = ({ location, isLive }) => {
+    const { position } = useReactiveVar(me);
+
+    useEffect(() => {
+        if (location && position && distanceFromLocation(location, position) > 100) {
+            sendNotification('Ой-ой! 🐶 Цуцик забіг задалеко 🐾').finally(console.log)
+        }
+    }, [location, position]);
+
     return <AdvancedMarker position={{
         lat: location.latitude,
         lng: location.longitude

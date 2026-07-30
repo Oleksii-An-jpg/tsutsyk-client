@@ -7,13 +7,16 @@ import {me} from "@/app/_lib/me";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 import {useEndSession} from "@/app/_lib/useTracker";
 import {SessionFragmentFragment} from "@/app/_documents/fragments/__generated__/SESSION_FRAGMENT.codegen";
+import type {userAgent} from "next/server";
+import PushNotificationManager from "@/app/_components/notification";
 
 type ControlsProps = {
     location?: Location | null;
     session?: SessionFragmentFragment | null
+    userAgent: ReturnType<typeof userAgent>
 }
 
-const Controls: FC<ControlsProps> = ({ location, session }) => {
+const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
     const map = useMap();
     const {position} = useReactiveVar(me);
     const [mutate, { loading: stopping }] = useEndSession();
@@ -28,6 +31,8 @@ const Controls: FC<ControlsProps> = ({ location, session }) => {
         }
     }, [mutate, session?.id])
     return <ButtonGroup orientation="vertical" size="sm" variant="solid">
+        <PushNotificationManager />
+        {/*<InstallPrompt />*/}
         <IconButton rounded="full" colorPalette="red" onClick={stopSession} loading={stopping}>
             <BiStopCircle />
         </IconButton>
