@@ -21,6 +21,7 @@ type Mutation {
   endSession(sessionId: String!): Session!
   postLocation(battery: Int, lat: Float!, lng: Float!, sessionId: String!, tsutsykId: String!): Location!
   startSession(sessionId: String!, tsutsykId: String!): Session!
+  updateTsutsyk(alertDistanceMeters: Int, id: ID!, photoUrl: String): Tsutsyk!
 }
 
 type Query {
@@ -51,6 +52,8 @@ type Subscription {
 }
 
 type Tsutsyk {
+  alertDistanceMeters: Int!
   id: ID!
+  photoUrl: String
   sessions: [Session!]!
 }
