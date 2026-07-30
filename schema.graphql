@@ -10,7 +10,7 @@ scalar DateTime
 
 type Location {
   battery: Float
-  id: Int!
+  id: ID!
   latitude: Float!
   longitude: Float!
   sessionId: String!
