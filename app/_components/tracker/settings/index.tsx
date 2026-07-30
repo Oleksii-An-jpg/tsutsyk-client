@@ -10,12 +10,14 @@ import {
     Box,
     Flex,
     Text,
+    Separator,
     Stack, HStack, Button,
 } from '@chakra-ui/react';
 import {BiLogOut, BiMenu, BiStopCircle} from 'react-icons/bi';
 import {Session, SessionStatus} from "@/app/_documents/__generated__/globalTypes.codegen";
 import {useEndSession, useTsutsykSessions} from "@/app/_lib/useTracker";
 import {auth} from "@/app/_lib/firebase";
+import TsutsykProfile from "@/app/_components/tracker/settings/tsutsyk-profile";
 
 type SettingsProps = {
     tsutsykId: string;
@@ -168,6 +170,8 @@ const Settings: FC<SettingsProps> = ({ tsutsykId, activeSessionId, onSelectSessi
                         </Drawer.Header>
 
                         <Drawer.Body p={3} overflowY="auto">
+                            <TsutsykProfile tsutsykId={tsutsykId} />
+                            <Separator my={3} />
                             {/*{loading ? (*/}
                             {/*    <Stack gap={2}>*/}
                             {/*        {[...Array(4)].map((_, i) => (*/}
