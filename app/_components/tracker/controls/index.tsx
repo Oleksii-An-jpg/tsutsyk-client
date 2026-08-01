@@ -1,4 +1,4 @@
-import {FC, useCallback} from "react";
+import {FC, useCallback, useEffect} from "react";
 import {ButtonGroup, IconButton} from "@chakra-ui/react";
 import {BiBody, BiSolidDog, BiStopCircle} from "react-icons/bi";
 import {useMap} from "@vis.gl/react-google-maps";
@@ -9,6 +9,8 @@ import {useEndSession} from "@/app/_lib/useTracker";
 import {SessionFragmentFragment} from "@/app/_documents/fragments/__generated__/SESSION_FRAGMENT.codegen";
 import type {userAgent} from "next/server";
 import PushNotificationManager from "@/app/_components/notification";
+import {useBoolean} from "usehooks-ts";
+import {useOnboardingTour} from "@/app/_hooks/useOnboardingTour";
 
 type ControlsProps = {
     location?: Location | null;
@@ -29,7 +31,19 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
                 }
             })
         }
-    }, [mutate, session?.id])
+    }, [mutate, session?.id]);
+
+    const { value, setTrue } = useBoolean(false);
+
+    const { start } = useOnboardingTour();
+
+    useEffect(() => {
+        if (!value) {
+            setTrue();
+            start();
+        }
+    }, [setTrue, start, value]);
+
     return <ButtonGroup orientation="vertical" size="sm" variant="solid">
         <PushNotificationManager />
         {/*<InstallPrompt />*/}

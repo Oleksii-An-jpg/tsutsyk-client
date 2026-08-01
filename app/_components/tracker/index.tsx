@@ -11,8 +11,6 @@ import Controls from "@/app/_components/tracker/controls";
 import Settings from "@/app/_components/tracker/settings";
 import {me} from "@/app/_lib/me";
 import type { userAgent } from 'next/server'
-import {useOnboardingTour} from "@/app/_hooks/useOnboardingTour";
-import {useBoolean} from "usehooks-ts";
 
 type TrackerProps = {
     userAgent: ReturnType<typeof userAgent>
@@ -82,16 +80,6 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
     const { session, trail, isLive, latestLocation } = useTsutsykTracking(tsutsykIds[0]);
     const { data: tsutsykData } = useTsutsyk(tsutsykIds[0]);
     const tsutsyk = tsutsykData?.getTsutsyk;
-    const { value, setTrue } = useBoolean(false);
-
-    const { start } = useOnboardingTour();
-
-    useEffect(() => {
-        if (!value) {
-            setTrue();
-            start();
-        }
-    }, [setTrue, start, value]);
 
     if (completed && !geolocationAllowed) {
         return  <AbsoluteCenter textAlign="center" px={8}>
