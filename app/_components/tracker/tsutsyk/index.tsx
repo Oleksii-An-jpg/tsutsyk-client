@@ -85,7 +85,7 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, photoUr
 
     const isMoving = (movement?.speedMetersPerSecond ?? 0) > MOVING_SPEED_THRESHOLD_MPS;
 
-    const isLowBattery = location.battery != null && location.battery < LOW_BATTERY_PERCENT;
+    const isLowBattery = isLive && location.battery != null && location.battery < LOW_BATTERY_PERCENT;
     const status: MarkerStatus = shouldNotify || isLowBattery
         ? "alert"
         : isLive && isMoving ? "active" : "idle";
@@ -94,8 +94,10 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, photoUr
     const isFresh = isLive && isRecentTimestamp(location.timestamp, FRESH_WINDOW_MS);
 
     const { label: lastSeenLabel, diffMins } = getLastSeenInfo(location.timestamp);
-    const batteryPalette = batteryColorPalette(location.battery);
-    const lastSeenPalette = lastSeenColorPalette(diffMins);
+    // Alert-style coloring only matters while a session is live — a closed
+    // session is just history, so battery/staleness don't need to alarm.
+    const batteryPalette = isLive ? batteryColorPalette(location.battery) : "gray";
+    const lastSeenPalette = isLive ? lastSeenColorPalette(diffMins) : "gray";
     const urgentPalette = status === "alert" ? "red" : lastSeenPalette !== "gray" ? lastSeenPalette : null;
 
     return <AdvancedMarker position={{
