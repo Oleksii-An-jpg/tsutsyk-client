@@ -21,7 +21,6 @@ const AVATAR_SIZE = "sm";
 const AVATAR_BOX_SIZE = "9"; // must match the "sm" avatar recipe size token
 const FRESH_WINDOW_MS = 30_000;
 const MOVING_SPEED_THRESHOLD_MPS = 0.5; // filters GPS jitter while stationary
-const MIN_BEARING_DISTANCE_METERS = 5; // avoids a noisy heading arrow when barely moving
 const LOW_BATTERY_PERCENT = 20;
 const STALE_AFTER_MINS = 30;
 const VERY_STALE_AFTER_MINS = 120;
@@ -85,9 +84,6 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, photoUr
     }, [previousLocation, location]);
 
     const isMoving = (movement?.speedMetersPerSecond ?? 0) > MOVING_SPEED_THRESHOLD_MPS;
-    const bearingDeg = movement && movement.distanceMeters > MIN_BEARING_DISTANCE_METERS
-        ? movement.bearingDeg
-        : null;
 
     const isLowBattery = location.battery != null && location.battery < LOW_BATTERY_PERCENT;
     const status: MarkerStatus = shouldNotify || isLowBattery
@@ -145,27 +141,6 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, photoUr
                     </Status.Root>
                 </Float>
             </Avatar.Root>
-            {bearingDeg != null && (
-                <Box
-                    position="absolute"
-                    inset="0"
-                    pointerEvents="none"
-                    style={{ transform: `rotate(${bearingDeg}deg)` }}
-                >
-                    <Box
-                        position="absolute"
-                        top="-6px"
-                        left="50%"
-                        transform="translateX(-50%)"
-                        w="0"
-                        h="0"
-                        borderLeft="5px solid transparent"
-                        borderRight="5px solid transparent"
-                        borderBottom="7px solid"
-                        borderBottomColor={`${statusColorPalette}.500`}
-                    />
-                </Box>
-            )}
         </Box>
     </AdvancedMarker>
 }
