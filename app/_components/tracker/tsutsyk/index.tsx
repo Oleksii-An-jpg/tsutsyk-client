@@ -1,4 +1,4 @@
-import {FC, useEffect} from "react";
+import {FC, useEffect, useMemo} from "react";
 import {Avatar, Status, Float, Badge} from "@chakra-ui/react";
 import {AdvancedMarker} from "@vis.gl/react-google-maps";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
@@ -35,11 +35,15 @@ function distanceFromLocation(location: Location, point: google.maps.LatLngLiter
 const Tsutsyk: FC<TsutsykProps> = ({ location, isLive, photoUrl, alertDistanceMeters }) => {
     const { position } = useReactiveVar(me);
 
+    const shouldNotify = useMemo(() => {
+        return isLive && location && position && alertDistanceMeters != null && distanceFromLocation(location, position) > alertDistanceMeters
+    }, [alertDistanceMeters, isLive, location, position])
+
     useEffect(() => {
-        if (location && position && alertDistanceMeters != null && distanceFromLocation(location, position) > alertDistanceMeters) {
+        if (shouldNotify) {
             sendNotification('Ой-ой! 🐶 Цуцик забіг задалеко 🐾').finally(console.log)
         }
-    }, [location, position, alertDistanceMeters]);
+    }, [shouldNotify]);
 
     return <AdvancedMarker position={{
         lat: location.latitude,
