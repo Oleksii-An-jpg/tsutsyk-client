@@ -118,6 +118,7 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
             {latestLocation && (
                 <Tsutsyk
                     location={latestLocation}
+                    previousLocation={trail.length > 1 ? trail[trail.length - 2] : null}
                     isLive={isLive}
                     photoUrl={tsutsyk?.photoUrl}
                     alertDistanceMeters={tsutsyk?.alertDistanceMeters}
