@@ -33,10 +33,10 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
     return <ButtonGroup orientation="vertical" size="sm" variant="solid">
         <PushNotificationManager />
         {/*<InstallPrompt />*/}
-        <IconButton rounded="full" colorPalette="red" onClick={stopSession} loading={stopping}>
+        <IconButton data-tour="stop-session" rounded="full" colorPalette="red" onClick={stopSession} loading={stopping}>
             <BiStopCircle />
         </IconButton>
-        <IconButton disabled={!location} onClick={() => {
+        <IconButton data-tour="focus-tsutsyk" disabled={!location} onClick={() => {
             if (location) {
                 map?.setCenter({
                     lat: location.latitude,
@@ -44,7 +44,7 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
                 })
             }
         }} rounded="full" colorPalette="pink"><BiSolidDog /></IconButton>
-        <IconButton onClick={() => {
+        <IconButton data-tour="focus-me" onClick={() => {
             map?.setCenter(position);
         }} rounded="full"><BiBody /></IconButton>
     </ButtonGroup>
