@@ -47,6 +47,9 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
         const driverObj = driver({
             allowClose: true,
             overlayColor: "black",
+            prevBtnText: '← Назад',
+            nextBtnText: 'Далі →',
+            doneBtnText: 'Готово! 🐾',
             overlayOpacity: 0.65,
             stagePadding: 6,
             stageRadius: 8,
