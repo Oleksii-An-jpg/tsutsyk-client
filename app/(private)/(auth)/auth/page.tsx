@@ -1,5 +1,6 @@
 'use client';
 
+import {useEffect} from 'react';
 import {
     Button,
     Tabs,
@@ -19,10 +20,23 @@ import EmailAuth from "@/app/(private)/(auth)/auth/_ui/email";
 import PhoneAuth from "@/app/(private)/(auth)/auth/_ui/phone";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
 import Link from "next/link";
+import {useRouter} from "next/navigation";
+import {POST_AUTH_REDIRECT_KEY} from "@/app/_lib/postAuthRedirect";
 
 export default function Auth() {
     const { value, toggle } = useBoolean(false);
     const { user } = useAdminAuth();
+    const router = useRouter();
+
+    // Sends the user back to wherever they came from (e.g. a /claim/{gadgetId}
+    // link scanned from a device QR code) instead of always landing on /me.
+    useEffect(() => {
+        if (!user) return;
+        const redirectTo = sessionStorage.getItem(POST_AUTH_REDIRECT_KEY);
+        if (!redirectTo) return;
+        sessionStorage.removeItem(POST_AUTH_REDIRECT_KEY);
+        router.replace(redirectTo);
+    }, [user, router]);
 
     async function handleGoogleLogin() {
         try {

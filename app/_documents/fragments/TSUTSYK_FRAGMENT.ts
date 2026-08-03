@@ -5,5 +5,6 @@ export const TSUTSYK_FRAGMENT = gql`
     id
     photoUrl
     alertDistanceMeters
+    claimed
   }
 `;

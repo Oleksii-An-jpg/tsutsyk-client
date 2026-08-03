@@ -48,6 +48,16 @@ import {
     UpdateTsutsykMutation,
     UpdateTsutsykMutationVariables
 } from "@/app/_documents/__generated__/MUTATION_UPDATE_TSUTSYK.codegen";
+import {QUERY_GADGET_STATUS} from "@/app/_documents/QUERY_GADGET_STATUS";
+import {
+    GadgetStatusQuery,
+    GadgetStatusQueryVariables
+} from "@/app/_documents/__generated__/QUERY_GADGET_STATUS.codegen";
+import {MUTATION_CLAIM_GADGET} from "@/app/_documents/MUTATION_CLAIM_GADGET";
+import {
+    ClaimGadgetMutation,
+    ClaimGadgetMutationVariables
+} from "@/app/_documents/__generated__/MUTATION_CLAIM_GADGET.codegen";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 
 // ─── Queries ──────────────────────────────────────────────────────────────
@@ -121,6 +131,17 @@ export function usePostLocation() {
 
 export function useUpdateTsutsyk() {
     return useMutation<UpdateTsutsykMutation, UpdateTsutsykMutationVariables>(MUTATION_UPDATE_TSUTSYK);
+}
+
+export function useGadgetStatus(gadgetId: string) {
+    return useQuery<GadgetStatusQuery, GadgetStatusQueryVariables>(
+        QUERY_GADGET_STATUS,
+        { variables: { id: gadgetId }, skip: !gadgetId, fetchPolicy: "network-only" }
+    );
+}
+
+export function useClaimGadget() {
+    return useMutation<ClaimGadgetMutation, ClaimGadgetMutationVariables>(MUTATION_CLAIM_GADGET);
 }
 
 export function useLiveTracking(sessionId: string) {

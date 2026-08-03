@@ -7,11 +7,13 @@ import {
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { ErrorLink } from "@apollo/client/link/error";
+import { SetContextLink } from "@apollo/client/link/context";
 import {
     CombinedGraphQLErrors,
     CombinedProtocolErrors,
 } from "@apollo/client/errors";
 import { createClient } from "graphql-ws";
+import { auth } from "@/app/_lib/firebase";
 
 const HTTP_URL =
     process.env.NEXT_PUBLIC_GRAPHQL_HTTP_URL ?? "/graphql";
@@ -40,6 +42,20 @@ const errorLink = new ErrorLink(({ error, operation }) => {
     }
 });
 
+// ─── Auth link — attaches the signed-in Firebase user's ID token ────────
+// so guarded mutations (e.g. claimGadget) can identify the caller.
+const authLink = new SetContextLink(async (prevContext) => {
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return prevContext;
+
+    return {
+        headers: {
+            ...(prevContext.headers as Record<string, string> | undefined),
+            authorization: `Bearer ${token}`,
+        },
+    };
+});
+
 // ─── HTTP link (queries & mutations) ────────────────────────────────────
 const httpLink = new HttpLink({ uri: HTTP_URL });
 
@@ -63,7 +79,7 @@ function makeWsLink() {
 // ─── Split: subscriptions → WS, everything else → HTTP ──────────────────
 function makeLink() {
     if (typeof window === "undefined") {
-        // SSR: HTTP only
+        // SSR: HTTP only, no signed-in user to attach a token for
         return ApolloLink.from([errorLink, httpLink]);
     }
 
@@ -81,7 +97,7 @@ function makeLink() {
         httpLink
     );
 
-    return ApolloLink.from([errorLink, splitLink]);
+    return ApolloLink.from([errorLink, authLink, splitLink]);
 }
 
 // ─── Cache ───────────────────────────────────────────────────────────────
