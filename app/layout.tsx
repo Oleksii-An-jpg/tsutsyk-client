@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tsutsyk Live",
-  description: "An app to track your beloved one",
+    title: "Tsutsyk Live",
+    description: "Додаток, який завжди знає, де твій хвостик",
 };
 
 export default function RootLayout({
@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="uk"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
@@ -38,6 +38,7 @@ export default function RootLayout({
             <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
             <link rel="preconnect" href="https://maps.googleapis.com" />
             <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
+            <title>Tsutsyk Live</title>
         </head>
         <Provider>
             <ChakraProvider>
