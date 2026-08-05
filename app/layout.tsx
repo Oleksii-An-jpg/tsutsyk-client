@@ -40,11 +40,13 @@ export default function RootLayout({
             <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
             <title>Tsutsyk Live</title>
         </head>
-        <Provider>
-            <ChakraProvider>
-                <body className="min-h-full flex flex-col">{children}</body>
-            </ChakraProvider>
-        </Provider>
+        <body className="min-h-full flex flex-col">
+            <Provider>
+                <ChakraProvider>
+                    {children}
+                </ChakraProvider>
+            </Provider>
+        </body>
     </html>
   );
 }
