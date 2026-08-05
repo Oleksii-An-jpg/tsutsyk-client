@@ -18,16 +18,20 @@ type Location {
 }
 
 type Mutation {
+  claimTsutsyk(id: ID!, name: String!, photoUrl: String): Tsutsyk!
   endSession(sessionId: String!): Session!
   postLocation(battery: Int, lat: Float!, lng: Float!, sessionId: String!, tsutsykId: String!): Location!
   startSession(sessionId: String!, tsutsykId: String!): Session!
+  updateTsutsyk(alertDistanceMeters: Int, id: ID!, photoUrl: String): Tsutsyk!
 }
 
 type Query {
   getActiveSession(tsutsykId: String!): Session
+  getMyTsutsyks: [Tsutsyk!]!
   getSession(sessionId: String!): Session
   getTsutsyk(id: ID!): Tsutsyk
   getTsutsykHistory(sessionId: ID!): [Location!]!
+  getTsutsykPublicProfile(id: ID!): TsutsykPublicProfile
   getTsutsykSessions(tsutsykId: String!): [Session!]!
 }
 
@@ -51,6 +55,17 @@ type Subscription {
 }
 
 type Tsutsyk {
+  alertDistanceMeters: Int!
+  claimed: Boolean!
   id: ID!
+  name: String
+  photoUrl: String
   sessions: [Session!]!
+}
+
+type TsutsykPublicProfile {
+  claimed: Boolean!
+  id: ID!
+  name: String
+  photoUrl: String
 }
