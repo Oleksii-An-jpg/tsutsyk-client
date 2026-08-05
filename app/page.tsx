@@ -6,7 +6,6 @@ export default async function Home() {
     // await adminAuth
     //     .setCustomUserClaims('rE62P2bwxPV7M4QcHoVMvzM4uVq2', {
     //         role: 'admin',
-    //         tsutsykIds: ['tsutsyk-odesa-01']
     //     });
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">

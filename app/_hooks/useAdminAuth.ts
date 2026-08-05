@@ -16,7 +16,6 @@ interface AdminAuthState {
 export function useAdminAuth(): AdminAuthState {
     const [user, setUser] = useState<User | null>(null);
     const [hasAdminRole, setHasAdminRole] = useState(false);
-    const [claimTsutsykIds, setClaimTsutsykIds] = useState<string[]>([]);
     const { value: isAdmin, setTrue, setFalse, setValue } = useBoolean(false);
     const router = useRouter();
 
@@ -34,15 +33,12 @@ export function useAdminAuth(): AdminAuthState {
                 try {
                     const idTokenResult = await firebaseUser.getIdTokenResult();
                     const isUserAdmin = idTokenResult.claims.role === 'admin';
-                    const tsutsykIds = Array.isArray(idTokenResult.claims.tsutsykIds) ? idTokenResult.claims.tsutsykIds : [];
                     setTrue();
                     setHasAdminRole(isUserAdmin);
-                    setClaimTsutsykIds(tsutsykIds);
                     me({
                         ...me(),
                         user: firebaseUser,
-                        tsutsykIds,
-                        authorised: isUserAdmin || tsutsykIds.length > 0,
+                        authorised: isUserAdmin,
                         checked: true,
                         authenticated: true,
                     });
@@ -58,7 +54,6 @@ export function useAdminAuth(): AdminAuthState {
             } else {
                 setFalse();
                 setHasAdminRole(false);
-                setClaimTsutsykIds([]);
                 me({
                     ...me(),
                     tsutsykIds: [],
@@ -77,13 +72,13 @@ export function useAdminAuth(): AdminAuthState {
     useEffect(() => {
         if (!user) return;
         const ownedIds = myTsutsyksData?.getMyTsutsyks?.map((t) => t.id) ?? [];
-        const tsutsykIds = Array.from(new Set([...claimTsutsykIds, ...ownedIds]));
+        const tsutsykIds = Array.from(new Set([...ownedIds]));
         me({
             ...me(),
             tsutsykIds,
             authorised: hasAdminRole || tsutsykIds.length > 0,
         });
-    }, [user, hasAdminRole, claimTsutsykIds, myTsutsyksData]);
+    }, [user, hasAdminRole, myTsutsyksData]);
 
     return { user, isAdmin };
 }
