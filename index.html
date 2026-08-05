@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Цуцик — завжди знати, де твій хвостик</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper: #EDE8DA;
+            --paper-deep: #E4DECC;
+            --pine: #223027;
+            --pine-soft: #3C4C40;
+            --brass: #B8863C;
+            --brass-deep: #9A6E2E;
+            --trail: #3E6FA6;
+            --alert: #B5482F;
+            --fog: #8A8577;
+            --line: rgba(34,48,39,0.14);
+
+            --display: 'Fraunces', serif;
+            --body: 'Inter', sans-serif;
+            --mono: 'IBM Plex Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--paper);
+            color: var(--pine);
+            font-family: var(--body);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a { color: inherit; }
+
+        ::selection { background: var(--brass); color: var(--paper); }
+
+        :focus-visible {
+            outline: 2px solid var(--trail);
+            outline-offset: 3px;
+        }
+
+        .wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 0 28px;
+        }
+
+        /* ---------- NAV ---------- */
+        nav {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: rgba(237,232,218,0.88);
+            backdrop-filter: blur(8px);
+            border-bottom: 1px solid var(--line);
+        }
+        nav .wrap {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 16px;
+            padding-bottom: 16px;
+            max-width: 780px;
+        }
+        .brand {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 1.25rem;
+            letter-spacing: 0.01em;
+        }
+        .brand span { color: var(--brass-deep); }
+        .nav-tag {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--fog);
+        }
+
+        /* ---------- HERO ---------- */
+        header.hero {
+            padding: 72px 0 56px;
+            position: relative;
+            overflow: hidden;
+        }
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--brass-deep);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 22px;
+        }
+        .eyebrow::before {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--brass);
+            display: inline-block;
+        }
+
+        h1 {
+            font-family: var(--display);
+            font-weight: 500;
+            font-size: clamp(2.2rem, 5.4vw, 3.4rem);
+            line-height: 1.12;
+            letter-spacing: -0.01em;
+            max-width: 13ch;
+            margin-bottom: 22px;
+        }
+        h1 em {
+            font-style: normal;
+            color: var(--trail);
+        }
+
+        .lede {
+            font-size: 1.08rem;
+            color: var(--pine-soft);
+            max-width: 46ch;
+            margin-bottom: 40px;
+        }
+
+        /* device chip cluster, echoing the actual app UI */
+        .device-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 100px;
+            padding: 8px 18px 8px 8px;
+            box-shadow: 0 6px 20px rgba(34,48,39,0.07);
+        }
+        .device-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(160deg, #DCD6C4, #C7BFA6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .device-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid var(--trail);
+            opacity: 0.55;
+        }
+        .device-meta { display: flex; flex-direction: column; gap: 2px; }
+        .device-meta .status {
+            font-family: var(--mono);
+            font-size: 0.78rem;
+            color: var(--pine-soft);
+        }
+        .device-meta .status b { color: #4E7D53; font-weight: 600; }
+        .device-meta .time {
+            font-family: var(--mono);
+            font-size: 0.72rem;
+            color: var(--fog);
+        }
+
+        /* ---------- TRAIL LAYOUT ---------- */
+        .story {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 0 28px 40px;
+        }
+
+        .waypoint {
+            display: grid;
+            grid-template-columns: 32px 1fr;
+            gap: 28px;
+            padding-bottom: 64px;
+        }
+        .waypoint:last-of-type { padding-bottom: 0; }
+
+        .trail-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .trail-dot {
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: var(--paper);
+            border: 2px solid var(--trail);
+            flex-shrink: 0;
+            margin-top: 6px;
+            transition: background 0.4s ease, transform 0.4s ease;
+        }
+        .waypoint.in-view .trail-dot {
+            background: var(--trail);
+            transform: scale(1.15);
+        }
+        .trail-seg {
+            width: 2px;
+            flex: 1;
+            margin-top: 4px;
+            background: linear-gradient(var(--trail) 0%, var(--trail) 0%, var(--line) 0%);
+            background-size: 100% 100%;
+            position: relative;
+            min-height: 40px;
+        }
+        .trail-seg::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--trail);
+            transform-origin: top;
+            transform: scaleY(0);
+            transition: transform 0.6s ease;
+        }
+        .waypoint.in-view .trail-seg::after { transform: scaleY(1); }
+        .waypoint:last-of-type .trail-seg { display: none; }
+
+        .waypoint-label {
+            font-family: var(--mono);
+            font-size: 0.74rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            color: var(--brass-deep);
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-family: var(--display);
+            font-weight: 500;
+            font-size: clamp(1.4rem, 2.6vw, 1.8rem);
+            margin-bottom: 14px;
+            line-height: 1.25;
+        }
+
+        .waypoint p {
+            color: var(--pine-soft);
+            max-width: 56ch;
+            font-size: 1.02rem;
+        }
+        .waypoint p + p { margin-top: 14px; }
+
+        /* feature grid inside a waypoint */
+        .features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 22px;
+        }
+        .feature {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 16px 18px;
+        }
+        .feature .f-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+        }
+        .feature .f-desc {
+            font-size: 0.88rem;
+            color: var(--fog);
+            line-height: 1.5;
+        }
+
+        .spec-line {
+            font-family: var(--mono);
+            font-size: 0.85rem;
+            color: var(--pine-soft);
+            background: var(--paper-deep);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-top: 18px;
+            border-left: 3px solid var(--brass);
+        }
+
+        .status-pill {
+            display: inline-block;
+            font-family: var(--mono);
+            font-size: 0.76rem;
+            background: rgba(62,111,166,0.1);
+            color: var(--trail);
+            padding: 4px 12px;
+            border-radius: 100px;
+            margin-bottom: 12px;
+        }
+
+        /* ---------- CLOSING ---------- */
+        .closing {
+            background: var(--pine);
+            color: var(--paper);
+            padding: 76px 0 60px;
+            margin-top: 20px;
+        }
+        .closing .wrap { max-width: 620px; }
+        .closing h2 {
+            color: var(--paper);
+            font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+        }
+        .closing p {
+            color: #CBC4AE;
+            max-width: 50ch;
+            margin-bottom: 30px;
+            font-size: 1.02rem;
+        }
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--brass);
+            color: var(--pine);
+            font-weight: 600;
+            padding: 13px 24px;
+            border-radius: 100px;
+            text-decoration: none;
+            font-size: 0.96rem;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .cta:hover { background: #C89A4C; transform: translateY(-1px); }
+
+        footer {
+            padding: 28px 0 40px;
+            text-align: center;
+            font-family: var(--mono);
+            font-size: 0.76rem;
+            color: var(--fog);
+        }
+        footer .wrap { max-width: 620px; }
+
+        @media (max-width: 560px) {
+            .features { grid-template-columns: 1fr; }
+            .waypoint { grid-template-columns: 24px 1fr; gap: 18px; }
+            header.hero { padding: 52px 0 44px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            .trail-dot, .trail-seg::after, .cta { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="wrap">
+        <div class="brand">Цуц<span>ик</span></div>
+        <div class="nav-tag">Зроблено в Україні</div>
+    </div>
+</nav>
+
+<header class="hero">
+    <div class="wrap">
+        <div class="eyebrow">Особистий проєкт · не стартап</div>
+        <h1>Я завжди знаю, де мій пес. <em>Тепер знатимете й ви.</em></h1>
+        <p class="lede">
+            Цуцик — це GPS/LTE-трекер на нашийник, який я спроєктував сам, тому що
+            одного разу не знав, де мій хаскі, і ця мить тривоги більше не мала повторитись.
+        </p>
+
+        <div class="device-chip">
+            <div class="device-avatar" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                    <path d="M6 20c0-3 1.5-5 3-6-1-1.5-1-3 0-4.5C10 8 11.5 7.5 12 6c1 1 1 2.5 1.8 3 1.5 1 3 3 3.2 5 .2 2-.5 4-1 6" stroke="#5B5442" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="9" cy="9.5" r="0.9" fill="#5B5442"/>
+                </svg>
+            </div>
+            <div class="device-meta">
+                <span class="status">Статус: <b>вдома, у дворі</b></span>
+                <span class="time">оновлено 4 хв тому</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="story">
+
+    <div class="waypoint" data-wp>
+        <div class="trail-col">
+            <div class="trail-dot"></div>
+            <div class="trail-seg"></div>
+        </div>
+        <div>
+            <div class="waypoint-label">Ідея</div>
+            <h2>Один хаскі, одна відкрита хвіртка</h2>
+            <p>
+                У мене сіро-білий хаскі. Він любить свободу — і кожна прогулянка без
+                повідця означає кілька секунд справжньої тривоги: а раптом побіжить за
+                котом і зникне за рогом? Готові трекери, які я знайшов, обіцяли рішення
+                на коробці, але не працювали там, де я живу.
+            </p>
+            <p>
+                Тож я вирішив зробити пристрій сам — не як продукт для ринку, а як
+                річ, якій довіряю.
+            </p>
+        </div>
+    </div>
+
+    <div class="waypoint" data-wp>
+        <div class="trail-col">
+            <div class="trail-dot"></div>
+            <div class="trail-seg"></div>
+        </div>
+        <div>
+            <div class="waypoint-label">Виклик</div>
+            <h2>Стандарти, які не ловлять сигнал в Україні</h2>
+            <p>
+                Більшість готових трекерів працюють на LTE-M або NB-IoT — стандартах,
+                які на українських мережах практично недоступні. Тобто пристрій міг
+                би виглядати ідеально в описі й мовчати саме тоді, коли потрібен
+                найбільше.
+            </p>
+            <div class="spec-line">
+                ESP32-S3 · LTE Cat-1 (A7670E) · GNSS · власна плата, розроблена з нуля в KiCad
+            </div>
+        </div>
+    </div>
+
+    <div class="waypoint" data-wp>
+        <div class="trail-col">
+            <div class="trail-dot"></div>
+            <div class="trail-seg"></div>
+        </div>
+        <div>
+            <div class="waypoint-label">Що вміє Цуцик</div>
+            <h2>Простий пристрій, який не підводить у важливий момент</h2>
+            <div class="features">
+                <div class="feature">
+                    <div class="f-title">Живе відстеження</div>
+                    <div class="f-desc">Позиція на мапі в реальному часі, з точністю до кількох метрів.</div>
+                </div>
+                <div class="feature">
+                    <div class="f-title">Межі двору</div>
+                    <div class="f-desc">Позначте безпечну зону — сповіщення прийде, щойно пес її перетне.</div>
+                </div>
+                <div class="feature">
+                    <div class="f-title">Не губить дані</div>
+                    <div class="f-desc">Якщо зв'язок зникає, дані чекають в черзі й надсилаються, щойно мережа повернеться.</div>
+                </div>
+                <div class="feature">
+                    <div class="f-title">Розуміє тривогу</div>
+                    <div class="f-desc">Під час повітряної тривоги трекер частіше оновлює позицію — саме тоді, коли це важливо.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="waypoint" data-wp>
+        <div class="trail-col">
+            <div class="trail-dot"></div>
+            <div class="trail-seg"></div>
+        </div>
+        <div>
+            <div class="waypoint-label">Зроблено в Україні</div>
+            <h2>Ручна робота, а не серійне виробництво — поки що</h2>
+            <p>
+                Кожна плата зараз збирається практично поштучно. Це не масовий продукт
+                і не обіцянка з презентації — це пристрій, який я сам ношу на
+                нашийнику власного пса й довіряю йому.
+            </p>
+            <p>
+                Якщо щось не працює — я перероблюю схему, а не пишу вибачення в
+                службу підтримки.
+            </p>
+        </div>
+    </div>
+
+    <div class="waypoint" data-wp>
+        <div class="trail-col">
+            <div class="trail-dot"></div>
+        </div>
+        <div>
+            <div class="waypoint-label">Зараз</div>
+            <span class="status-pill">Ранній етап · перші прототипи в зборці</span>
+            <h2>Цуцик ще молодий. Як і має бути.</h2>
+            <p>
+                Проєкт росте повільно й уважно — так само, як я б хотів, щоб зростав
+                сам пес. Якщо історія відгукується або є що запитати — буду радий
+                почути.
+            </p>
+        </div>
+    </div>
+
+</main>
+
+<section class="closing">
+    <div class="wrap">
+        <h2>Хочете дізнатись, як просувається Цуцик?</h2>
+        <p>Пишіть — розповім, на якому етапі зараз пристрій, і покажу, як він працює насправді.</p>
+        <a class="cta" href="mailto:hello@tsutsyk.app">
+            Написати мені
+            <span aria-hidden="true">→</span>
+        </a>
+    </div>
+</section>
+
+<footer>
+    <div class="wrap">
+        Цуцик — особистий проєкт. Зроблено з любові до одного конкретного хаскі.
+    </div>
+</footer>
+
+<script>
+    // Progressively "walk" the trail as each waypoint enters view.
+    const waypoints = document.querySelectorAll('[data-wp]');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reduceMotion) {
+        waypoints.forEach(wp => wp.classList.add('in-view'));
+    } else if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                }
+            });
+        }, { threshold: 0.35, rootMargin: '0px 0px -10% 0px' });
+
+        waypoints.forEach(wp => observer.observe(wp));
+    } else {
+        waypoints.forEach(wp => wp.classList.add('in-view'));
+    }
+</script>
+
+</body>
+</html>
