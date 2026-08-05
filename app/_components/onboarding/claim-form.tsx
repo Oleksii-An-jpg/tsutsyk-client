@@ -6,6 +6,7 @@ import {Avatar, Button, Card, Field, HStack, Heading, Input, Stack, Text} from '
 import {useForm} from 'react-hook-form';
 import {useClaimTsutsyk} from '@/app/_lib/useTracker';
 import {uploadTsutsykPhoto} from '@/app/_lib/uploadTsutsykPhoto';
+import defaultDogPhoto from '@/public/karemat.jpg';
 
 type ClaimFormProps = {
     id: string;
@@ -19,15 +20,17 @@ type Values = {
 const ClaimForm: FC<ClaimFormProps> = ({id}) => {
     const router = useRouter();
     const [mutate, {loading: saving, error}] = useClaimTsutsyk();
-    const [preview, setPreview] = useState<string | null>(null);
+    const [preview, setPreview] = useState<string>(defaultDogPhoto.src);
 
     const {register, handleSubmit, watch, formState: {errors}} = useForm<Values>();
-    const photoFiles = watch('photo');
-    const watchedName = watch('name');
+    const [photoFiles, watchedName] = watch(['photo', 'name']);
 
     useEffect(() => {
         const file = photoFiles?.[0];
-        if (!file) return;
+        if (!file) {
+            setPreview(defaultDogPhoto.src);
+            return;
+        }
         const url = URL.createObjectURL(file);
         setPreview(url);
         return () => URL.revokeObjectURL(url);
@@ -35,7 +38,7 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
 
     const onSubmit = handleSubmit(async ({name, photo}) => {
         const file = photo?.[0];
-        const photoUrl = file ? await uploadTsutsykPhoto(id, file) : undefined;
+        const photoUrl = file ? await uploadTsutsykPhoto(id, file) : defaultDogPhoto.src;
         await mutate({variables: {id, name, photoUrl}});
         router.push('/me');
     });
@@ -54,7 +57,7 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
                     <HStack gap={3}>
                         <Avatar.Root size="lg" colorPalette="pink">
                             <Avatar.Fallback name={watchedName || 'Цуцик'} />
-                            {preview && <Avatar.Image src={preview} />}
+                            <Avatar.Image src={preview} />
                         </Avatar.Root>
                         <Field.Root>
                             <Field.Label>Фото</Field.Label>
@@ -64,7 +67,7 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
 
                     <Field.Root required invalid={!!errors.name}>
                         <Field.Label>Ім&#39;я</Field.Label>
-                        <Input placeholder="Рекс" {...register('name', {required: "Вкажіть ім'я"})} />
+                        <Input placeholder="Каремат" {...register('name', {required: "Вкажіть ім'я"})} />
                         <Field.ErrorText>{errors.name?.message}</Field.ErrorText>
                     </Field.Root>
 
@@ -75,7 +78,7 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
                     )}
 
                     <Button type="submit" colorPalette="blue" loading={saving}>
-                        Забрати цуцика
+                        Зареєструвати цуцика
                     </Button>
                 </Stack>
             </Card.Body>
