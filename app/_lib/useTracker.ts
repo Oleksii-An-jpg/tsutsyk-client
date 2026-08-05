@@ -48,6 +48,21 @@ import {
     UpdateTsutsykMutation,
     UpdateTsutsykMutationVariables
 } from "@/app/_documents/__generated__/MUTATION_UPDATE_TSUTSYK.codegen";
+import {QUERY_TSUTSYK_PUBLIC_PROFILE} from "@/app/_documents/QUERY_TSUTSYK_PUBLIC_PROFILE";
+import {
+    TsutsykPublicProfileQuery,
+    TsutsykPublicProfileQueryVariables
+} from "@/app/_documents/__generated__/QUERY_TSUTSYK_PUBLIC_PROFILE.codegen";
+import {QUERY_MY_TSUTSYKS} from "@/app/_documents/QUERY_MY_TSUTSYKS";
+import {
+    MyTsutsyksQuery,
+    MyTsutsyksQueryVariables
+} from "@/app/_documents/__generated__/QUERY_MY_TSUTSYKS.codegen";
+import {MUTATION_CLAIM_TSUTSYK} from "@/app/_documents/MUTATION_CLAIM_TSUTSYK";
+import {
+    ClaimTsutsykMutation,
+    ClaimTsutsykMutationVariables
+} from "@/app/_documents/__generated__/MUTATION_CLAIM_TSUTSYK.codegen";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 
 // ─── Queries ──────────────────────────────────────────────────────────────
@@ -103,6 +118,21 @@ export function useTsutsykHistory(sessionId: string) {
     );
 }
 
+// Public, unauthenticated lookup for the tsutsyk.live/tsutsyk/<id> landing page.
+export function useTsutsykPublicProfile(id: string) {
+    return useQuery<TsutsykPublicProfileQuery, TsutsykPublicProfileQueryVariables>(
+        QUERY_TSUTSYK_PUBLIC_PROFILE,
+        { variables: { id }, skip: !id }
+    );
+}
+
+export function useMyTsutsyks(opts?: { skip?: boolean }) {
+    return useQuery<MyTsutsyksQuery, MyTsutsyksQueryVariables>(
+        QUERY_MY_TSUTSYKS,
+        { skip: opts?.skip }
+    );
+}
+
 // ─── Mutations ────────────────────────────────────────────────────────────
 
 export function useStartSession() {
@@ -121,6 +151,12 @@ export function usePostLocation() {
 
 export function useUpdateTsutsyk() {
     return useMutation<UpdateTsutsykMutation, UpdateTsutsykMutationVariables>(MUTATION_UPDATE_TSUTSYK);
+}
+
+export function useClaimTsutsyk() {
+    return useMutation<ClaimTsutsykMutation, ClaimTsutsykMutationVariables>(MUTATION_CLAIM_TSUTSYK, {
+        refetchQueries: [QUERY_MY_TSUTSYKS],
+    });
 }
 
 export function useLiveTracking(sessionId: string) {

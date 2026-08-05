@@ -12,6 +12,7 @@ import {
     CombinedProtocolErrors,
 } from "@apollo/client/errors";
 import { createClient } from "graphql-ws";
+import { auth } from "@/app/_lib/firebase";
 
 const HTTP_URL =
     process.env.NEXT_PUBLIC_GRAPHQL_HTTP_URL ?? "/graphql";
@@ -41,7 +42,18 @@ const errorLink = new ErrorLink(({ error, operation }) => {
 });
 
 // ─── HTTP link (queries & mutations) ────────────────────────────────────
-const httpLink = new HttpLink({ uri: HTTP_URL });
+// Attaches the current Firebase user's ID token, if any, so guarded
+// resolvers (claimTsutsyk, updateTsutsyk, getMyTsutsyks) can verify the
+// caller server-side. No-op when nobody is signed in yet.
+const httpLink = new HttpLink({
+    uri: HTTP_URL,
+    fetch: async (input, init) => {
+        const token = await auth.currentUser?.getIdToken();
+        const headers = new Headers(init?.headers);
+        if (token) headers.set("Authorization", `Bearer ${token}`);
+        return fetch(input, { ...init, headers });
+    },
+});
 
 // ─── WebSocket link (subscriptions) — only on client ────────────────────
 function makeWsLink() {

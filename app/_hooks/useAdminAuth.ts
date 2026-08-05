@@ -6,7 +6,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import {useBoolean} from "usehooks-ts";
 import {me} from '@/app/_lib/me';
-import {useReactiveVar} from "@apollo/client/react";
+import {useMyTsutsyks} from "@/app/_lib/useTracker";
 
 interface AdminAuthState {
     user: User | null;
@@ -15,40 +15,49 @@ interface AdminAuthState {
 
 export function useAdminAuth(): AdminAuthState {
     const [user, setUser] = useState<User | null>(null);
+    const [hasAdminRole, setHasAdminRole] = useState(false);
     const { value: isAdmin, setTrue, setFalse, setValue } = useBoolean(false);
     const router = useRouter();
-    const self = useReactiveVar(me);
+
+    // A Tsutsyk can be granted access either via the admin-managed
+    // tsutsykIds custom claim, or by self-claiming it at /tsutsyk/<id> —
+    // recorded as ownerUid on the Tsutsyk doc instead. Both sources are
+    // merged below once they're available.
+    const { data: myTsutsyksData } = useMyTsutsyks({ skip: !user });
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            setUser(firebaseUser);
 
-            if (user) {
+            if (firebaseUser) {
                 try {
-                    const idTokenResult = await user.getIdTokenResult();
-                    const hasAdminRole = idTokenResult.claims.role === 'admin';
-                    const tsutsykIds = Array.isArray(idTokenResult.claims.tsutsykIds) ? idTokenResult.claims.tsutsykIds : [];
+                    const idTokenResult = await firebaseUser.getIdTokenResult();
+                    const isUserAdmin = idTokenResult.claims.role === 'admin';
                     setTrue();
+                    setHasAdminRole(isUserAdmin);
                     me({
-                        ...self,
-                        tsutsykIds,
-                        user,
-                        authorised: hasAdminRole,
+                        ...me(),
+                        user: firebaseUser,
+                        authorised: isUserAdmin,
                         checked: true,
                         authenticated: true,
                     });
                 } catch (error) {
                     console.error('Error checking admin role:', error);
                     me({
-                        ...self,
+                        ...me(),
                         authorised: false,
                         checked: true,
                         authenticated: false,
                     });
                 }
             } else {
+                setFalse();
+                setHasAdminRole(false);
                 me({
-                    ...self,
+                    ...me(),
+                    tsutsykIds: [],
+                    authorised: false,
                     checked: true,
                 });
             }
@@ -56,6 +65,20 @@ export function useAdminAuth(): AdminAuthState {
 
         return () => unsubscribe();
     }, [router, setValue, setFalse, setTrue]);
+
+    // Re-merge whenever the owned-Tsutsyk query resolves (or the claims
+    // above change), so a freshly self-claimed device grants access without
+    // requiring a token refresh.
+    useEffect(() => {
+        if (!user) return;
+        const ownedIds = myTsutsyksData?.getMyTsutsyks?.map((t) => t.id) ?? [];
+        const tsutsykIds = Array.from(new Set([...ownedIds]));
+        me({
+            ...me(),
+            tsutsykIds,
+            authorised: hasAdminRole || tsutsykIds.length > 0,
+        });
+    }, [user, hasAdminRole, myTsutsyksData]);
 
     return { user, isAdmin };
 }
