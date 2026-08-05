@@ -1,6 +1,7 @@
 'use client';
 
 import {FC, ReactNode} from "react";
+import {BiSolidBatteryCharging} from "react-icons/bi";
 import {
     Avatar,
     Badge,
@@ -235,16 +236,16 @@ const Hero: FC = () => (
                         </Status.Root>
                     </Float>
                 </Box>
-                <VStack align="start" gap="0">
-                    <Text fontSize="xs" color="fg.subtle" fontWeight="medium">
-                        Статус Карематика
-                    </Text>
-                    <Text fontWeight="semibold" color="green.fg">
-                        вдома, у дворі
-                    </Text>
-                    <Text fontSize="xs" color="fg.muted">
-                        оновлено 4 хв тому
-                    </Text>
+                <VStack align="start" gap="0.5">
+                    <Text fontWeight="semibold">Карематик</Text>
+                    <HStack gap="2" fontSize="xs" color="fg.muted">
+                        <HStack gap="1" color="green.fg">
+                            <Icon as={BiSolidBatteryCharging} boxSize="3.5" />
+                            <Text as="span">82%</Text>
+                        </HStack>
+                        <Text as="span" color="green.fg">на зв&apos;язку</Text>
+                        <Text as="span">оновлено 4 хв тому</Text>
+                    </HStack>
                 </VStack>
             </Card.Root>
         </Container>
