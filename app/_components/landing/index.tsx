@@ -23,7 +23,6 @@ import {
     LuMapPinned,
     LuPawPrint,
     LuRadioTower,
-    LuShieldCheck,
     LuSiren,
 } from "react-icons/lu";
 import {ColorModeButton} from "@/components/ui/color-mode";
@@ -35,11 +34,6 @@ const FEATURES = [
         icon: LuMapPinned,
         title: "Живе відстеження",
         desc: "Позиція на мапі в реальному часі, з точністю до кількох метрів.",
-    },
-    {
-        icon: LuShieldCheck,
-        title: "Межі двору",
-        desc: "Позначте безпечну зону — сповіщення прийде, щойно пес її перетне.",
     },
     {
         icon: LuRadioTower,
