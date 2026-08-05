@@ -303,7 +303,7 @@ const Closing: FC = () => (
                 Пишіть — розповім, на якому етапі зараз пристрій, і покажу, як він працює насправді.
             </Text>
             <Button asChild size="lg" colorPalette="orange" rounded="full">
-                <a href="mailto:hello@tsutsyk.app">
+                <a href="mailto:hello@tsutsyk.live">
                     Написати мені
                     <LuArrowRight />
                 </a>
