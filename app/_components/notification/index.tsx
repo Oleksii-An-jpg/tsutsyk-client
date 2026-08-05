@@ -69,7 +69,7 @@ const PushNotificationManager: FC = () => {
     }
 
     return (
-        <IconButton disabled={!value} data-tour="push-notification" onClick={subscription ? unsubscribeFromPush : subscribeToPush} rounded="full" colorPalette="yellow">
+        <IconButton title={subscription ? 'Вимкнути' : 'Умикнути'} disabled={!value} data-tour="push-notification" onClick={subscription ? unsubscribeFromPush : subscribeToPush} colorPalette="yellow">
             {!value ? <BiBellMinus /> : subscription ? <BiBellOff /> : <BiBell />}
         </IconButton>
     )
