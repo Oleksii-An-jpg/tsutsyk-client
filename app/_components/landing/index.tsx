@@ -21,6 +21,7 @@ import {
 } from "@chakra-ui/react";
 import {
     LuArrowRight,
+    LuBellRing,
     LuMapPinned,
     LuPawPrint,
     LuRadioTower,
@@ -35,6 +36,11 @@ const FEATURES = [
         icon: LuMapPinned,
         title: "Живе відстеження",
         desc: "Позиція на мапі в реальному часі, з точністю до кількох метрів.",
+    },
+    {
+        icon: LuBellRing,
+        title: "Push-сповіщення",
+        desc: "Якщо пес відійде задалеко від вас, телефон одразу сповістить — навіть якщо додаток закритий.",
     },
     {
         icon: LuRadioTower,
