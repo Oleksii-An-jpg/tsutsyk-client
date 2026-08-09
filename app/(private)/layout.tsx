@@ -25,7 +25,7 @@ export default function Layout({
 
     if (!checked) {
         return (
-            <Container py={4}>
+            <Container>
                 <Center h="100vh">
                     <Spinner size="xl" colorPalette="blue" />
                 </Center>

@@ -2,7 +2,7 @@ import {makeVar as makeLove} from "@apollo/client";
 import {User} from "firebase/auth";
 
 type Me = {
-    position: google.maps.LatLngLiteral
+    position?: google.maps.LatLngLiteral
     geolocationAllowed: boolean;
     geolocationAvailable: boolean;
     user: User | null;
@@ -22,8 +22,4 @@ export const me = makeLove<Me>({
     checked: false,
     authenticated: false,
     geolocationAllowed: false,
-    position: {
-        lat: 46.4600902,
-        lng: 30.5469775
-    }
 })

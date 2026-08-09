@@ -108,7 +108,10 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
         {completed ? <Map
             mapId={'bf51a910020fa25a'}
             style={{width: '100vw', height: '100vh'}}
-            defaultCenter={position}
+            defaultCenter={position ?? {
+                lat: 46.4600902,
+                lng: 30.5469775
+            }}
             defaultZoom={12}
             gestureHandling='greedy'
             disableDefaultUI
