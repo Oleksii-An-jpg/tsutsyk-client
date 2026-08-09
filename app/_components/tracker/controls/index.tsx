@@ -60,8 +60,10 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
                 })
             }
         }} colorPalette="pink"><BiSolidDog /></IconButton>
-        <IconButton title="До мене 📍" data-tour="focus-me" onClick={() => {
-            map?.setCenter(position);
+        <IconButton disabled={!position} title="До мене 📍" data-tour="focus-me" onClick={() => {
+            if (position) {
+                map?.setCenter(position);
+            }
         }}><BiBody /></IconButton>
     </ButtonGroup>
 }
