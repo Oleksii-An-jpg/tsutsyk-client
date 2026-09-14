@@ -12,8 +12,11 @@ type Values = {
 }
 
 const PhoneAuth: FC = () => {
-    const { register, handleSubmit, formState: { errors, isValid, isSubmitting }, setError } = useForm<Values>({
-        mode: 'onChange'
+    // onTouched, not onChange: a phone number is invalid for most of the time
+    // it takes to type one, and saying so on every keystroke is just nagging.
+    // Errors wait for the first blur, then track live while it's corrected.
+    const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<Values>({
+        mode: 'onTouched'
     });
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     return <VStack gap={4} asChild>
@@ -56,7 +59,6 @@ const PhoneAuth: FC = () => {
             </Field.Root>
 
             <Button
-                disabled={!isValid}
                 type="submit"
                 colorPalette="blue"
                 width="full"
