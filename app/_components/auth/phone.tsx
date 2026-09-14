@@ -5,7 +5,7 @@ import {Button, Field, Input, VStack} from "@chakra-ui/react";
 import {useForm} from "react-hook-form";
 import {ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber} from "firebase/auth";
 import {auth} from "@/app/_lib/firebase";
-import Verification from "@/app/(private)/(auth)/auth/_ui/verification";
+import Verification from "@/app/_components/auth/verification";
 
 type Values = {
     phone: string;
