@@ -12,12 +12,11 @@ type Values = {
 }
 
 const PhoneAuth: FC = () => {
-    // onTouched, not onChange: a phone number is invalid for most of the time
-    // it takes to type one, and saying so on every keystroke is just nagging.
-    // Errors wait for the first blur, then track live while it's corrected.
-    const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<Values>({
-        mode: 'onTouched'
-    });
+    // Default mode: quiet while typing, error on the submit attempt, then live
+    // as it's corrected. Note that `disabled={!isValid}` can't come back without
+    // dragging onChange back with it — isValid only tracks outside onSubmit —
+    // and that pairing is what used to flag a half-typed number as invalid.
+    const { register, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<Values>();
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     return <VStack gap={4} asChild>
         {confirmationResult ? <Verification result={confirmationResult} /> : <form onSubmit={handleSubmit(async (data) => {

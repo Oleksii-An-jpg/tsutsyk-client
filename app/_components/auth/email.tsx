@@ -16,11 +16,7 @@ type EmailAuthProps = {
 }
 
 const EmailAuth: FC<EmailAuthProps> = ({ isSignUp }) => {
-    // Nothing here reads isValid, so onChange only ever bought the noise of
-    // telling someone their half-typed address is invalid.
-    const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<Values>({
-        mode: 'onTouched'
-    });
+    const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<Values>();
     return <VStack gap={4} asChild>
         <form onSubmit={handleSubmit(async (data) => {
             try {
