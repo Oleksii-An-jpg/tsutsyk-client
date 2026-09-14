@@ -15,18 +15,21 @@ type VerificationProps = {
 
 const Verification: FC<VerificationProps> = ({ result }) => {
     const { control, handleSubmit, reset, formState: { errors, isSubmitting }, setError } = useForm<Values>();
+
+    const onSubmit = handleSubmit(async (data) => {
+        if (!result) return;
+        try {
+            const userCredential = await result.confirm(data.code.join(''));
+            await userCredential.user.getIdTokenResult();
+        } catch (e) {
+            const err = e as unknown as Error;
+            const errorMessage = err.message || 'Verification failed';
+            setError('code', { message: errorMessage });
+        }
+    });
+
     return <VStack asChild gap={4}>
-        <form onSubmit={handleSubmit(async (data) => {
-            if (!result) return;
-            try {
-                const userCredential = await result.confirm(data.code.join(''));
-                await userCredential.user.getIdTokenResult();
-            } catch (e) {
-                const err = e as unknown as Error;
-                const errorMessage = err.message || 'Verification failed';
-                setError('code', { message: errorMessage });
-            }
-        })}>
+        <form onSubmit={onSubmit}>
             <Alert.Root status="info">
                 <Alert.Indicator />
                 <Alert.Description>
@@ -43,6 +46,7 @@ const Verification: FC<VerificationProps> = ({ result }) => {
                         <PinInput.Root
                             w="full"
                             value={field.value}
+                            onValueComplete={() => onSubmit()}
                             onValueChange={(e) => field.onChange(e.value)}
                         >
                             <PinInput.HiddenInput />

@@ -1,18 +1,25 @@
 'use client';
 
+import {FC} from 'react';
 import {Button, Card, Heading, HStack, Tabs, Text} from '@chakra-ui/react';
 import {GoogleAuthProvider, signInWithPopup} from 'firebase/auth';
 import {useBoolean} from 'usehooks-ts';
 import {BiLogoGoogle} from 'react-icons/bi';
 import {auth} from '@/app/_lib/firebase';
-import EmailAuth from '@/app/(private)/(auth)/auth/_ui/email';
-import PhoneAuth from '@/app/(private)/(auth)/auth/_ui/phone';
+import EmailAuth from '@/app/_components/auth/email';
+import PhoneAuth from '@/app/_components/auth/phone';
 
-// Deliberately self-contained rather than reusing the /auth route: that
-// route lives under a layout that gates on *global* authorisation (an
-// admin-granted role), which a first-time claimant doesn't have yet.
-const AuthStep = () => {
-    const {value, toggle} = useBoolean(false);
+type AuthCardProps = {
+    title: string;
+    description?: string;
+};
+
+// Shared by /auth and by the QR claim flow at /tsutsyk/<id>. Those two kept
+// their own copies of this card for a while — the claim flow needed one that
+// didn't sit under a layout gating on authorisation a first-time claimant
+// can't have yet — and the copies had started to drift apart.
+const AuthCard: FC<AuthCardProps> = ({title, description}) => {
+    const {value: isSignUp, toggle} = useBoolean(false);
 
     async function handleGoogleLogin() {
         try {
@@ -26,10 +33,12 @@ const AuthStep = () => {
     return (
         <Card.Root>
             <Card.Header>
-                <Heading size="lg">Знайомство з цуциком</Heading>
-                <Text fontSize="sm" color="gray.500">
-                    Спочатку увійдіть або зареєструйтесь
-                </Text>
+                <Heading size="lg">{title}</Heading>
+                {description && (
+                    <Text fontSize="sm" color="fg.muted">
+                        {description}
+                    </Text>
+                )}
             </Card.Header>
 
             <Card.Body>
@@ -40,7 +49,7 @@ const AuthStep = () => {
                     </Tabs.List>
 
                     <Tabs.Content value="email" pt={4}>
-                        <EmailAuth isSignUp={value} />
+                        <EmailAuth isSignUp={isSignUp} />
                     </Tabs.Content>
 
                     <Tabs.Content value="phone" pt={4}>
@@ -57,10 +66,10 @@ const AuthStep = () => {
                     </Button>
                     <HStack>
                         <Text fontSize="sm">
-                            {value ? 'Вже маєте обліковий запис?' : 'Немає облікового запису?'}
+                            {isSignUp ? 'Вже маєте обліковий запис?' : 'Немає облікового запису?'}
                         </Text>
                         <Button size="xs" variant="outline" onClick={() => toggle()}>
-                            {value ? 'Увійти' : 'Зареєструватися'}
+                            {isSignUp ? 'Увійти' : 'Зареєструватися'}
                         </Button>
                     </HStack>
                 </HStack>
@@ -69,4 +78,4 @@ const AuthStep = () => {
     );
 };
 
-export default AuthStep;
+export default AuthCard;

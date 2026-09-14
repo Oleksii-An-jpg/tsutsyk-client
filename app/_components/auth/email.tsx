@@ -16,9 +16,7 @@ type EmailAuthProps = {
 }
 
 const EmailAuth: FC<EmailAuthProps> = ({ isSignUp }) => {
-    const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<Values>({
-        mode: 'onChange'
-    });
+    const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm<Values>();
     return <VStack gap={4} asChild>
         <form onSubmit={handleSubmit(async (data) => {
             try {

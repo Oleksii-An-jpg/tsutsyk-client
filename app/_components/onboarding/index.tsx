@@ -6,7 +6,7 @@ import {useReactiveVar} from '@apollo/client/react';
 import {me} from '@/app/_lib/me';
 import {useAdminAuth} from '@/app/_hooks/useAdminAuth';
 import {useTsutsykPublicProfile} from '@/app/_lib/useTracker';
-import AuthStep from './auth-step';
+import AuthCard from '@/app/_components/auth';
 import ClaimForm from './claim-form';
 import PublicProfile from './public-profile';
 
@@ -53,7 +53,14 @@ const Onboarding: FC<OnboardingProps> = ({id}) => {
 
     return (
         <Container maxW="2xl" py={16}>
-            {authenticated ? <ClaimForm id={id} /> : <AuthStep />}
+            {authenticated ? (
+                <ClaimForm id={id} />
+            ) : (
+                <AuthCard
+                    title="Знайомство з цуциком"
+                    description="Спочатку увійдіть або зареєструйтесь"
+                />
+            )}
         </Container>
     );
 };

@@ -23,7 +23,7 @@ export function useAdminAuth(): AdminAuthState {
     // tsutsykIds custom claim, or by self-claiming it at /tsutsyk/<id> —
     // recorded as ownerUid on the Tsutsyk doc instead. Both sources are
     // merged below once they're available.
-    const { data: myTsutsyksData } = useMyTsutsyks({ skip: !user });
+    const { data: myTsutsyksData, loading: loadingMyTsutsyks } = useMyTsutsyks({ skip: !user });
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -41,6 +41,9 @@ export function useAdminAuth(): AdminAuthState {
                         authorised: isUserAdmin,
                         checked: true,
                         authenticated: true,
+                        // An admin is authorised on the claim alone; everyone
+                        // else is still pending the getMyTsutsyks round-trip.
+                        tsutsyksChecked: isUserAdmin,
                     });
                 } catch (error) {
                     console.error('Error checking admin role:', error);
@@ -49,6 +52,7 @@ export function useAdminAuth(): AdminAuthState {
                         authorised: false,
                         checked: true,
                         authenticated: false,
+                        tsutsyksChecked: true,
                     });
                 }
             } else {
@@ -56,9 +60,12 @@ export function useAdminAuth(): AdminAuthState {
                 setHasAdminRole(false);
                 me({
                     ...me(),
+                    user: null,
                     tsutsykIds: [],
                     authorised: false,
                     checked: true,
+                    authenticated: false,
+                    tsutsyksChecked: false,
                 });
             }
         });
@@ -70,15 +77,16 @@ export function useAdminAuth(): AdminAuthState {
     // above change), so a freshly self-claimed device grants access without
     // requiring a token refresh.
     useEffect(() => {
-        if (!user) return;
+        if (!user || loadingMyTsutsyks) return;
         const ownedIds = myTsutsyksData?.getMyTsutsyks?.map((t) => t.id) ?? [];
         const tsutsykIds = Array.from(new Set([...ownedIds]));
         me({
             ...me(),
             tsutsykIds,
             authorised: hasAdminRole || tsutsykIds.length > 0,
+            tsutsyksChecked: true,
         });
-    }, [user, hasAdminRole, myTsutsyksData]);
+    }, [user, hasAdminRole, myTsutsyksData, loadingMyTsutsyks]);
 
     return { user, isAdmin };
 }

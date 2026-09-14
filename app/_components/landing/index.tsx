@@ -27,6 +27,7 @@ import {
     LuRadioTower,
     LuSiren,
 } from "react-icons/lu";
+import Link from "next/link";
 import {ColorModeButton} from "@/components/ui/color-mode";
 
 const CONTENT_WIDTH = "3xl";
@@ -191,6 +192,11 @@ const NavBar: FC = () => (
                     >
                         Зроблено в Україні
                     </Text>
+                    {/* One entry point for both cases: /auth forwards a ґазда
+                        who is already signed in straight to their tracker. */}
+                    <Button asChild size="sm" variant="outline" rounded="full">
+                        <Link href="/auth">Увійти</Link>
+                    </Button>
                     <ColorModeButton />
                 </HStack>
             </HStack>

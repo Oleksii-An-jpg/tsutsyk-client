@@ -6,6 +6,7 @@ import {Avatar, Button, Card, Field, HStack, Heading, Input, Stack, Text} from '
 import {useForm} from 'react-hook-form';
 import {useClaimTsutsyk} from '@/app/_lib/useTracker';
 import {uploadTsutsykPhoto} from '@/app/_lib/uploadTsutsykPhoto';
+import {me} from '@/app/_lib/me';
 import defaultDogPhoto from '@/public/karemat.jpg';
 
 type ClaimFormProps = {
@@ -40,6 +41,19 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
         const file = photo?.[0];
         const photoUrl = file ? await uploadTsutsykPhoto(id, file) : defaultDogPhoto.src;
         await mutate({variables: {id, name, photoUrl}});
+
+        // The refetch of getMyTsutsyks is still in flight when the mutation
+        // resolves, so /me would otherwise read a stale "owns nothing" and
+        // bounce this brand-new ґазда straight back out to /auth. We know what
+        // we just claimed; record it and let the refetch confirm it.
+        const self = me();
+        me({
+            ...self,
+            tsutsykIds: Array.from(new Set([...self.tsutsykIds, id])),
+            authorised: true,
+            tsutsyksChecked: true,
+        });
+
         router.push('/me');
     });
 

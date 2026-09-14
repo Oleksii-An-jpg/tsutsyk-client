@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import {useRouter} from "next/navigation";
 import {Center, Container, Spinner} from "@chakra-ui/react";
-import {me} from "@/app/_lib/me";
+import {authSettled, me} from "@/app/_lib/me";
 import {useReactiveVar} from "@apollo/client/react";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
 
@@ -12,18 +12,19 @@ export default function Layout({
     children: React.ReactNode;
 }>) {
     const router = useRouter();
-    const {authorised, checked} = useReactiveVar(me);
+    const self = useReactiveVar(me);
+    const settled = authSettled(self);
 
     useAdminAuth();
 
     useEffect(() => {
-        if (checked && !authorised) {
-            router.push('/auth');
+        if (settled && !self.authorised) {
+            router.replace('/auth');
             return;
         }
-    }, [checked, router, authorised]);
+    }, [settled, router, self.authorised]);
 
-    if (!checked) {
+    if (!settled) {
         return (
             <Container>
                 <Center h="100vh">
