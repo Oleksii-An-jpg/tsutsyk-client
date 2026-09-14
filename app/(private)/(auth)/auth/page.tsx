@@ -1,11 +1,12 @@
 'use client';
 
+import {useEffect} from 'react';
+import {useRouter} from 'next/navigation';
 import {
     Button,
     Tabs,
     Heading,
-    Card, Container, VStack, Group,
-    Link as ChakraLink,
+    Card, Center, Container, Spinner,
     Text, HStack
 } from '@chakra-ui/react';
 import {
@@ -17,12 +18,23 @@ import {useBoolean} from "usehooks-ts";
 import {BiLogoGoogle} from "react-icons/bi";
 import EmailAuth from "@/app/(private)/(auth)/auth/_ui/email";
 import PhoneAuth from "@/app/(private)/(auth)/auth/_ui/phone";
-import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
-import Link from "next/link";
+import {me} from "@/app/_lib/me";
+import {useReactiveVar} from "@apollo/client/react";
 
 export default function Auth() {
     const { value, toggle } = useBoolean(false);
-    const { user } = useAdminAuth();
+    const router = useRouter();
+    const { checked, authorised } = useReactiveVar(me);
+
+    // Signing in is a means, not a destination. Once the session is good for
+    // the tracker there is nothing left to decide here, so go straight to it —
+    // `replace` rather than `push` so Back doesn't bounce the user into a
+    // login screen they have already passed.
+    useEffect(() => {
+        if (checked && authorised) {
+            router.replace('/me');
+        }
+    }, [checked, authorised, router]);
 
     async function handleGoogleLogin() {
         try {
@@ -33,27 +45,17 @@ export default function Auth() {
         }
     }
 
+    if (checked && authorised) {
+        return (
+            <Center h="50vh">
+                <Spinner size="xl" colorPalette="blue" />
+            </Center>
+        );
+    }
+
     return (
         <Container maxW="2xl">
-            {user ? <VStack>
-                <Heading>{user.displayName}</Heading>
-                <Group>
-                    <Button asChild>
-                        <ChakraLink asChild>
-                            <Link href="/me">
-                                До трекеру
-                            </Link>
-                        </ChakraLink>
-                    </Button>
-                    <Button
-                        onClick={() => auth.signOut()}
-                        colorPalette="red"
-                        variant="outline"
-                    >
-                        Вийти
-                    </Button>
-                </Group>
-            </VStack> : <Card.Root>
+            <Card.Root>
                 <Card.Header>
                     <Heading size="lg">
                         Авторизація
@@ -106,7 +108,7 @@ export default function Auth() {
                         </HStack>
                     </HStack>
                 </Card.Footer>
-            </Card.Root>}
+            </Card.Root>
         </Container>
     );
 }
