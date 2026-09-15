@@ -37,12 +37,13 @@ const AvatarPreview: FC<AvatarPreviewProps> = ({name, src}) => {
 };
 
 type AvatarUploadProps = AvatarPreviewProps & UseFormRegisterReturn & {
-    /** Result of `register('photo')` — the form still owns the submitted value. */
+    /** Trigger button label. */
     label?: string;
+    /** Name the avatar falls back to — `name` is taken by `register('photo')`. */
     nickname?: string
 };
 
-const AvatarUpload: FC<AvatarUploadProps> = ({ nickname = 'Цуцик', src, label = 'Аватарка', ...rest}) => (
+const AvatarUpload: FC<AvatarUploadProps> = ({ nickname, src, label = 'Аватарка', ...rest}) => (
     <FileUpload.Root accept="image/*">
         <HStack gap={3}>
             <FileUpload.HiddenInput {...rest} />
@@ -51,7 +52,7 @@ const AvatarUpload: FC<AvatarUploadProps> = ({ nickname = 'Цуцик', src, lab
                     <BiUpload /> {label}
                 </Button>
             </FileUpload.Trigger>
-            <AvatarPreview name={nickname} src={src} />
+            <AvatarPreview name={nickname || 'Цуцик'} src={src} />
         </HStack>
     </FileUpload.Root>
 );
