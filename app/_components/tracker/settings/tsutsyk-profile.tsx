@@ -1,10 +1,11 @@
 'use client';
 
 import {FC, useEffect, useState} from 'react';
-import {Avatar, Button, Field, HStack, Input, Stack} from '@chakra-ui/react';
+import {Avatar, Button, Field, HStack, Input, Stack, FileUpload} from '@chakra-ui/react';
 import {useForm} from 'react-hook-form';
 import {useTsutsyk, useUpdateTsutsyk} from '@/app/_lib/useTracker';
 import {uploadTsutsykPhoto} from '@/app/_lib/uploadTsutsykPhoto';
+import {BiUpload} from "react-icons/bi";
 
 type TsutsykProfileProps = {
     tsutsykId: string;
@@ -46,16 +47,22 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
     return (
         <Stack as="form" gap={3} onSubmit={onSubmit}>
             <HStack gap={3}>
+                <Field.Root>
+                    <FileUpload.Root>
+                        <FileUpload.HiddenInput {...register('photo')} />
+                        <FileUpload.Trigger asChild>
+                            <Button variant="outline" size="sm">
+                                <BiUpload /> Аватарка
+                            </Button>
+                        </FileUpload.Trigger>
+                    </FileUpload.Root>
+                </Field.Root>
                 <Avatar.Root size="lg" colorPalette="pink">
                     <Avatar.Fallback name="Карематик" />
                     {(preview ?? tsutsyk?.photoUrl) && (
                         <Avatar.Image src={preview ?? tsutsyk?.photoUrl ?? undefined} />
                     )}
                 </Avatar.Root>
-                <Field.Root>
-                    <Field.Label>Фото</Field.Label>
-                    <Input type="file" accept="image/*" p={1} {...register('photo')} />
-                </Field.Root>
             </HStack>
 
             <Field.Root>

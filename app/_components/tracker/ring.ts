@@ -10,10 +10,10 @@ export const MARKER_STATUS_COLOR_PALETTE: Record<MarkerStatus, string> = {
 
 export const ringCss = defineStyle({
     outlineWidth: "2px",
-    outlineColor: "colorPalette.500",
+    outlineColor: "colorPalette.200",
     outlineOffset: "2px",
     outlineStyle: "solid",
-    color: "colorPalette.500",
+    color: "colorPalette.200",
     filter: "drop-shadow(0 2px 3px rgba(0, 0, 0, 0.35))",
     transition: "outline-color 0.2s ease-in-out",
 });

@@ -21,10 +21,13 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
     const { position, completed, tsutsykIds, geolocationAllowed } = self;
     useEffect(() => {
         let watchId: number | null = null;
+        let consecutiveErrors = 0;
+        const ERROR_THRESHOLD = 3; // tune to taste
 
         const startWatching = () => {
             watchId = navigator.geolocation.watchPosition(
                 (position) => {
+                    consecutiveErrors = 0;
                     me({
                         ...me(),
                         position: { lat: position.coords.latitude, lng: position.coords.longitude },
@@ -34,38 +37,51 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
                     });
                 },
                 (err) => {
+                    if (err.code === err.PERMISSION_DENIED) {
+                        me({ ...me(), completed: true, geolocationAllowed: false });
+                        return;
+                    }
+
+                    consecutiveErrors += 1;
+
+                    if (consecutiveErrors < ERROR_THRESHOLD) {
+                        // transient kCLErrorLocationUnknown / timeout — ignore, keep waiting
+                        console.log(`geolocation transient error (${consecutiveErrors}/${ERROR_THRESHOLD}):`, err.code);
+                        return;
+                    }
+
+                    // persisted across multiple attempts — now treat as real
                     me({
                         ...me(),
                         completed: true,
-                        geolocationAllowed: err.code !== err.PERMISSION_DENIED,
-                        geolocationAvailable: err.code !== err.POSITION_UNAVAILABLE,
+                        geolocationAllowed: true,
+                        geolocationAvailable: false,
                     });
                 },
-                { maximumAge: 10000, timeout: 10000 }
+                { maximumAge: 10000, enableHighAccuracy: false }
             );
         };
 
         if (navigator.permissions) {
             navigator.permissions.query({ name: 'geolocation' }).then((result) => {
-                console.log('permission state:', result.state);
-
                 if (result.state === 'denied') {
-                    console.log('denied — not starting watch');
                     me({ ...me(), geolocationAllowed: false, completed: true });
                     return;
                 }
 
-                console.log('starting watch...');
                 startWatching();
 
                 result.onchange = () => {
                     const allowed = result.state !== 'denied';
-                    me({ ...me(), geolocationAllowed: allowed, geolocationAvailable: allowed, completed: true });
-                    if (allowed) window.location.reload();
+                    me({ ...me(), geolocationAllowed: allowed, completed: true });
+                    if (allowed) {
+                        consecutiveErrors = 0;
+                        if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                        startWatching();
+                    }
                 };
             });
         } else {
-            console.log('no permissions API — starting watch directly');
             startWatching();
         }
 
@@ -128,9 +144,7 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
                 />
             )}
             <Box className="fixed top-4 right-4">
-                <Settings onSelectSession={(sessionId) => {
-                    console.log(sessionId);
-                }} activeSessionId={session?.id} tsutsykId={tsutsykIds[0]} />
+                <Settings tsutsykId={tsutsykIds[0]} />
             </Box>
             <Box className="fixed bottom-4 right-4">
                 <Controls session={session} userAgent={userAgent} location={latestLocation} />

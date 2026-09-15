@@ -7,6 +7,7 @@ import {me} from "@/app/_lib/me";
 
 const Me: FC = () => {
     const {position, geolocationAllowed, geolocationAvailable, user} = useReactiveVar(me);
+
     return <AdvancedMarker position={position}>
         <Avatar.Root size="xs" css={ringCss} colorPalette="green">
             <Avatar.Fallback name={user?.displayName ?? undefined} />
