@@ -1,13 +1,13 @@
 'use client';
 
-import {FC, useEffect, useState} from 'react';
+import {FC} from 'react';
 import {useRouter} from 'next/navigation';
-import {Avatar, Button, Card, Field, HStack, Heading, Input, Stack, Text} from '@chakra-ui/react';
+import {Button, Card, Field, Heading, Input, Stack, Text} from '@chakra-ui/react';
 import {useForm} from 'react-hook-form';
 import {useClaimTsutsyk} from '@/app/_lib/useTracker';
 import {uploadTsutsykPhoto} from '@/app/_lib/uploadTsutsykPhoto';
 import {me} from '@/app/_lib/me';
-import defaultDogPhoto from '@/public/karemat.jpg';
+import AvatarUpload from '@/app/_components/avatar-upload';
 
 type ClaimFormProps = {
     id: string;
@@ -21,25 +21,13 @@ type Values = {
 const ClaimForm: FC<ClaimFormProps> = ({id}) => {
     const router = useRouter();
     const [mutate, {loading: saving, error}] = useClaimTsutsyk();
-    const [preview, setPreview] = useState<string>(defaultDogPhoto.src);
 
     const {register, handleSubmit, watch, formState: {errors}} = useForm<Values>();
-    const [photoFiles, watchedName] = watch(['photo', 'name']);
-
-    useEffect(() => {
-        const file = photoFiles?.[0];
-        if (!file) {
-            setPreview(defaultDogPhoto.src);
-            return;
-        }
-        const url = URL.createObjectURL(file);
-        setPreview(url);
-        return () => URL.revokeObjectURL(url);
-    }, [photoFiles]);
+    const nickname = watch('name');
 
     const onSubmit = handleSubmit(async ({name, photo}) => {
         const file = photo?.[0];
-        const photoUrl = file ? await uploadTsutsykPhoto(id, file) : defaultDogPhoto.src;
+        const photoUrl = file && await uploadTsutsykPhoto(id, file);
         await mutate({variables: {id, name, photoUrl}});
 
         // The refetch of getMyTsutsyks is still in flight when the mutation
@@ -68,16 +56,13 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
 
             <Card.Body>
                 <Stack as="form" gap={4} onSubmit={onSubmit}>
-                    <HStack gap={3}>
-                        <Avatar.Root size="lg" colorPalette="pink">
-                            <Avatar.Fallback name={watchedName || 'Цуцик'} />
-                            <Avatar.Image src={preview} />
-                        </Avatar.Root>
-                        <Field.Root>
-                            <Field.Label>Фото</Field.Label>
-                            <Input type="file" accept="image/*" p={1} {...register('photo')} />
-                        </Field.Root>
-                    </HStack>
+                    <Field.Root>
+                        <AvatarUpload
+                            {...register('photo')}
+                            nickname={nickname}
+                            label="Фото"
+                        />
+                    </Field.Root>
 
                     <Field.Root required invalid={!!errors.name}>
                         <Field.Label>Ім&#39;я</Field.Label>

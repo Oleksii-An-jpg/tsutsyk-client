@@ -13,6 +13,7 @@ type TsutsykProps = {
     location: Location;
     previousLocation?: Location | null;
     isLive: boolean;
+    name?: string | null;
     photoUrl?: string | null;
     alertDistanceMeters?: number | null;
 }
@@ -59,7 +60,7 @@ function distanceFromLocation(location: Location, point: google.maps.LatLngLiter
     );
 }
 
-const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, photoUrl, alertDistanceMeters }) => {
+const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, name, photoUrl, alertDistanceMeters }) => {
     const { position } = useReactiveVar(me);
 
     // Re-render periodically so "Xm ago" / freshness keep advancing without a new location.
@@ -111,7 +112,7 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, photoUr
                 colorPalette={statusColorPalette}
                 className={isFresh ? "tracker-marker-pulse" : undefined}
             >
-                <Avatar.Fallback name="Карематик" />
+                <Avatar.Fallback name={name || 'Цуцик'} />
                 {photoUrl && <Avatar.Image src={photoUrl} />}
                 <Float placement="bottom-center" offsetY="-3">
                     <Badge
