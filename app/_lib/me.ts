@@ -1,13 +1,12 @@
 import {makeVar as makeLove} from "@apollo/client";
 import {User} from "firebase/auth";
 
-type Me = {
+export type Me = {
     position?: google.maps.LatLngLiteral
     geolocationAllowed: boolean;
     geolocationAvailable: boolean;
     user: User | null;
     tsutsykIds: string[];
-    completed: boolean;
     authorised: boolean;
     authenticated: boolean;
     checked: boolean;
@@ -18,13 +17,24 @@ export const me = makeLove<Me>({
     user: null,
     tsutsykIds: [],
     geolocationAvailable: false,
-    completed: false,
     authorised: false,
     checked: false,
     authenticated: false,
     tsutsyksChecked: false,
     geolocationAllowed: false,
 })
+
+// The var is compared by reference, so writing an equal-but-new object still
+// re-renders every consumer — the whole map included. Geolocation errors
+// arrive in bursts of a dozen, so patching blindly would mean a burst of
+// full-map re-renders that change nothing on screen.
+export function patchMe(patch: Partial<Me>) {
+    const current = me();
+    const changed = (Object.keys(patch) as (keyof Me)[]).some((key) => current[key] !== patch[key]);
+    if (changed) {
+        me({...current, ...patch});
+    }
+}
 
 // Firebase answering is not the same as knowing whether someone may use the
 // tracker: a ґазда who isn't an admin only becomes authorised once
