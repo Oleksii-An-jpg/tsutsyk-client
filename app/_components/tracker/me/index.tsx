@@ -8,6 +8,13 @@ import {me} from "@/app/_lib/me";
 const Me: FC = () => {
     const {position, geolocationAllowed, geolocationAvailable, user} = useReactiveVar(me);
 
+    // The map now opens without waiting for a fix, so there is a real window
+    // where we have no position at all. A marker without one lands on Null
+    // Island, which reads as "your ґазда is in the Atlantic".
+    if (!position) {
+        return null;
+    }
+
     return <AdvancedMarker position={position}>
         <Avatar.Root size="xs" css={ringCss} colorPalette="green">
             <Avatar.Fallback name={user?.displayName ?? undefined} />
