@@ -8,7 +8,6 @@ import {useClaimTsutsyk} from '@/app/_lib/useTracker';
 import {uploadTsutsykPhoto} from '@/app/_lib/uploadTsutsykPhoto';
 import {me} from '@/app/_lib/me';
 import AvatarUpload from '@/app/_components/avatar-upload';
-import defaultDogPhoto from '@/public/karemat.jpg';
 
 type ClaimFormProps = {
     id: string;
@@ -24,11 +23,11 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
     const [mutate, {loading: saving, error}] = useClaimTsutsyk();
 
     const {register, handleSubmit, watch, formState: {errors}} = useForm<Values>();
-    const watchedName = watch('name');
+    const nickname = watch('name');
 
     const onSubmit = handleSubmit(async ({name, photo}) => {
         const file = photo?.[0];
-        const photoUrl = file ? await uploadTsutsykPhoto(id, file) : defaultDogPhoto.src;
+        const photoUrl = file && await uploadTsutsykPhoto(id, file);
         await mutate({variables: {id, name, photoUrl}});
 
         // The refetch of getMyTsutsyks is still in flight when the mutation
@@ -59,9 +58,8 @@ const ClaimForm: FC<ClaimFormProps> = ({id}) => {
                 <Stack as="form" gap={4} onSubmit={onSubmit}>
                     <Field.Root>
                         <AvatarUpload
-                            register={register('photo')}
-                            name={watchedName || 'Цуцик'}
-                            src={defaultDogPhoto.src}
+                            {...register('photo')}
+                            nickname={nickname}
                             label="Фото"
                         />
                     </Field.Root>

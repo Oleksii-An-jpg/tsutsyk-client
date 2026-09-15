@@ -38,8 +38,8 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
         <Stack as="form" gap={3} onSubmit={onSubmit}>
             <Field.Root>
                 <AvatarUpload
-                    register={register('photo')}
-                    name={tsutsyk?.name ?? undefined}
+                    {...register('photo')}
+                    nickname={tsutsyk?.name ?? undefined}
                     src={tsutsyk?.photoUrl}
                 />
             </Field.Root>

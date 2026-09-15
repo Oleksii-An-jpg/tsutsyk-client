@@ -8,7 +8,7 @@ import {BiUpload} from 'react-icons/bi';
 type AvatarPreviewProps = {
     /** Name the avatar falls back to while there is no picture at all. */
     name?: string;
-    /** Picture to show until a new file is picked (the saved one, or a default). */
+    /** Picture to show until a new file is picked (the saved one, or none). */
     src?: string | null;
 };
 
@@ -36,22 +36,22 @@ const AvatarPreview: FC<AvatarPreviewProps> = ({name, src}) => {
     );
 };
 
-type AvatarUploadProps = AvatarPreviewProps & {
+type AvatarUploadProps = AvatarPreviewProps & UseFormRegisterReturn & {
     /** Result of `register('photo')` — the form still owns the submitted value. */
-    register: UseFormRegisterReturn;
     label?: string;
+    nickname?: string
 };
 
-const AvatarUpload: FC<AvatarUploadProps> = ({register, name, src, label = 'Аватарка'}) => (
+const AvatarUpload: FC<AvatarUploadProps> = ({ nickname = 'Цуцик', src, label = 'Аватарка', ...rest}) => (
     <FileUpload.Root accept="image/*">
         <HStack gap={3}>
-            <FileUpload.HiddenInput {...register} />
+            <FileUpload.HiddenInput {...rest} />
             <FileUpload.Trigger asChild>
                 <Button variant="outline" size="sm">
                     <BiUpload /> {label}
                 </Button>
             </FileUpload.Trigger>
-            <AvatarPreview name={name} src={src} />
+            <AvatarPreview name={nickname} src={src} />
         </HStack>
     </FileUpload.Root>
 );
