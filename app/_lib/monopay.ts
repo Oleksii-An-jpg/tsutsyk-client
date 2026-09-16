@@ -1,15 +1,16 @@
 /**
  * Order signing for the monopay button widget.
  *
- * The widget — not us — creates the invoice. Our only job is to hand it a
- * signed order, per the flow in the monopay docs ("Кнопка monopay"):
+ * The widget — not us — creates the invoice. Our only job is to sign the order:
  *
- *   payloadBase64 = btoa(JSON.stringify(orderData))
- *   signature     = sign(JSON.stringify(orderData) + requestId)
+ *   payloadBase64 = base64(JSON.stringify(orderData))
+ *   signature     = base64(DER(ECDSA-P256(SHA256(JSON.stringify(orderData) + requestId))))
+ *
+ * Docs: https://monobank.ua/api-docs/acquiring/methods/monopay/docs--js-widget
  *
  * The key is a one-time ECDSA P-256 pair whose public half is imported through
- * `POST /api/merchant/monopay/pubkey-import`; that call returns the `keyId`
- * the widget quotes back to monobank. See the README for the openssl commands.
+ * `POST /api/merchant/monopay/pubkey-import`, which returns the `keyId` the
+ * widget quotes back to monobank. See the README for the openssl commands.
  *
  * This module reads the private key, so it must never reach a Client
  * Component — it is imported only from the `prepareMonopayOrder` action.
@@ -18,26 +19,35 @@
 import { createSign, randomUUID } from "node:crypto";
 
 /**
- * The order the widget turns into an invoice.
- *
- * NOTE: these field names come from the sequence diagram in the docs
- * ("POST /prepare-payment (orderId, amount, items…)"). Verify them against the
- * "JavaScript виджет" page before going live — a wrong field name here fails
- * at invoice creation, inside the widget, where it is awkward to debug.
+ * The order the widget turns into an invoice. The docs put it plainly: the
+ * structure is identical to the body of the invoice-create API.
  */
 export type OrderData = {
-    /** Our own order id, echoed back on the webhook. */
-    orderId: string;
     /** Total in minor units (kopiykas). */
     amount: number;
     /** ISO 4217; 980 is the hryvnia. */
     ccy: number;
-    items: Array<{
-        name: string;
-        qty: number;
-        /** Line total in minor units. */
-        sum: number;
-    }>;
+    merchantPaymInfo: {
+        /** Our own order id. monobank echoes it back on the webhook. */
+        reference: string;
+        destination: string;
+        comment?: string;
+        basketOrder?: Array<{
+            name: string;
+            qty: number;
+            /** Line total in minor units. */
+            sum: number;
+            unit?: string;
+            code?: string;
+            icon?: string;
+        }>;
+    };
+    redirectUrl?: string;
+    successUrl?: string;
+    failUrl?: string;
+    webHookUrl?: string;
+    /** Seconds the invoice stays payable. Default 24h, max 30 days. */
+    validity?: number;
 };
 
 /** Exactly what `MonoPay.init` needs from the server. */
@@ -50,6 +60,12 @@ export type SignedOrder = {
 
 export const UAH = 980;
 
+/**
+ * monobank expires a requestId after 10 minutes, so a signed order left
+ * sitting on an open tab goes stale. The button re-signs on this interval.
+ */
+export const REQUEST_ID_TTL_MS = 10 * 60 * 1000;
+
 function requireEnv(name: string): string {
     const value = process.env[name];
     if (!value) throw new Error(`${name} is not set — see .env.example`);
@@ -59,12 +75,16 @@ function requireEnv(name: string): string {
 /**
  * Signs one order attempt.
  *
- * `requestId` is fresh per call: it is what stops a captured payload from being
- * replayed, so it must never be derived from the order contents.
+ * `requestId` is fresh per call — it is what makes the operation idempotent on
+ * monobank's side and stops a captured payload being replayed — so it must
+ * never be derived from the order contents.
  */
 export function signOrder(orderData: OrderData): SignedOrder {
     const keyId = requireEnv("MONOPAY_KEY_ID");
-    // Stored single-line in the environment, the same way FIREBASE_PRIVATE_KEY is.
+    // Stored single-line in the environment, the same way FIREBASE_PRIVATE_KEY
+    // is. Node accepts both the SEC1 ("EC PRIVATE KEY") form that monobank's
+    // openssl recipe produces and the PKCS#8 ("PRIVATE KEY") form their sample
+    // code expects, so either export of private.pem works here.
     const privateKey = requireEnv("MONOPAY_PRIVATE_KEY").replace(/\\n/g, "\n");
 
     const requestId = randomUUID();
@@ -73,10 +93,11 @@ export function signOrder(orderData: OrderData): SignedOrder {
     // second JSON.stringify risks signing something the payload does not match.
     const json = JSON.stringify(orderData);
 
+    // Node emits DER for ECDSA by default, which is what the widget wants.
+    // (monobank's sample signs as ieee-p1363 and converts to DER by hand; both
+    // produce the same DER signature.)
     const signature = createSign("SHA256")
         .update(json + requestId, "utf8")
-        // Node defaults ECDSA signatures to DER. If monobank rejects the
-        // signature, the other common convention is `dsaEncoding: "ieee-p1363"`.
         .sign(privateKey, "base64");
 
     return {

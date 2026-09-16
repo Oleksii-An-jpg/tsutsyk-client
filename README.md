@@ -34,8 +34,13 @@ monobank app on mobile — we only sign the order.
    `payloadBase64 = base64(JSON.stringify(orderData))`,
    `signature = sign(JSON.stringify(orderData) + requestId)`.
 3. The client passes `{keyId, requestId, payloadBase64, signature}` to
-   `MonoPay.init(...)` and mounts the button element it returns.
+   `MonoPay.init(...)` and mounts the `button` element it returns.
 4. The widget takes over from the click onward and calls `onSuccess`.
+5. monobank POSTs the real outcome to the `webHookUrl` carried in the signed
+   payload.
+
+`requestId` expires after 10 minutes, so the button re-signs on a timer rather
+than leaving a dead button on a page someone left open.
 
 ### Files
 
@@ -48,20 +53,19 @@ monobank app on mobile — we only sign the order.
 
 ### Setup
 
-See `.env.example` for the one-time key generation and import. In short:
-generate an ECDSA P-256 pair, import the public half through
-`POST /api/merchant/monopay/pubkey-import` to get a `keyId`, and keep the
-private half in `MONOPAY_PRIVATE_KEY`.
+1. Generate an ECDSA P-256 pair and import the public half — the exact commands
+   are in `.env.example`. The import returns a `keyId`.
+2. Put the `keyId` in `MONOPAY_KEY_ID` and the private key in
+   `MONOPAY_PRIVATE_KEY` (single line, newlines as `\n`).
+3. Set `MONOBANK_ACQUIRING_TOKEN` and `NEXT_PUBLIC_SITE_URL`.
 
-### Still to verify
+Two things worth knowing:
 
-The saved docs cover the flow but not the widget's JavaScript surface. Before
-going live, check these against the "JavaScript виджет" and "Приклади
-формування підпису даних замовлення" pages:
-
-- the `orderData` field names in `app/_lib/monopay.ts`
-- the widget script URL and its `ui` / callback options
-- whether the ECDSA signature should be DER (Node's default) or `ieee-p1363`
+- monobank's own sample signing code only accepts a PKCS#8
+  (`-----BEGIN PRIVATE KEY-----`) key, but the openssl recipe in the same docs
+  produces SEC1 (`-----BEGIN EC PRIVATE KEY-----`). We read both, so whichever
+  export of `private.pem` you have will work.
+- The widget is still in beta, per monobank's docs.
 
 ### Webhook
 
@@ -77,9 +81,16 @@ rather than updating one. It is idempotent — monobank retries, and a
 redelivery rewrites the same values — and deliveries that arrive out of order
 cannot walk a settled payment back to an in-flight status.
 
-monobank cannot POST to `localhost`, so to exercise it locally, expose the dev
-server through a tunnel (`cloudflared tunnel --url https://localhost:3000`) and
-register that host as your webhook URL.
+The callback URL is not configured in the monobank dashboard — it travels
+inside the signed payload as `webHookUrl`, built from `NEXT_PUBLIC_SITE_URL`.
+Signing it means nobody can point our callbacks somewhere else. monobank cannot
+POST to `localhost`, so to exercise it locally, expose the dev server through a
+tunnel and point `NEXT_PUBLIC_SITE_URL` at it:
+
+```bash
+cloudflared tunnel --url https://localhost:3000
+NEXT_PUBLIC_SITE_URL=https://<tunnel-host> npm run dev
+```
 
 Fulfilment (confirmation email, assembly queue) is still a TODO in the route.
 
