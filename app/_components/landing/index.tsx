@@ -29,8 +29,15 @@ import {
 } from "react-icons/lu";
 import Link from "next/link";
 import {ColorModeButton} from "@/components/ui/color-mode";
+import MonopayButton from "@/app/_components/monopay-button";
 
 const CONTENT_WIDTH = "3xl";
+
+export type LandingProps = {
+    productId: string;
+    /** Formatted on the server — the price catalogue never reaches the browser. */
+    price: string;
+};
 
 const FEATURES = [
     {
@@ -204,7 +211,7 @@ const NavBar: FC = () => (
     </Box>
 );
 
-const Hero: FC = () => (
+const Hero: FC<LandingProps> = ({productId, price}) => (
     <Box as="header" pt={{base: 14, md: 20}} pb={{base: 10, md: 14}}>
         <Container maxW={CONTENT_WIDTH}>
             <HStack colorPalette="orange" gap="2" mb="5">
@@ -221,10 +228,23 @@ const Hero: FC = () => (
                 </Text>
             </Heading>
 
-            <Text fontSize="lg" color="fg.muted" maxW="46ch" mb="10">
+            <Text fontSize="lg" color="fg.muted" maxW="46ch" mb="8">
                 Цуцик — це GPS/LTE-трекер на нашийник, який я спроєктував сам, тому що
                 одного разу не знав, де мій хаскі, і ця мить тривоги більше не мала повторитись.
             </Text>
+
+            {/* Пристрої збираються поштучно, тож це передзамовлення, а не
+                покупка зі складу — формулювання має збігатися з таймлайном нижче. */}
+            <Box mb="10">
+                <MonopayButton
+                    productId={productId}
+                    size="lg"
+                    colorPalette="orange"
+                    rounded="full"
+                >
+                    Передзамовити за {price}
+                </MonopayButton>
+            </Box>
 
             <Card.Root
                 display="inline-flex"
@@ -299,7 +319,7 @@ const Story: FC = () => (
     </Box>
 );
 
-const Closing: FC = () => (
+const Closing: FC<LandingProps> = ({productId, price}) => (
     <Box as="section" bg="bg.inverted" color="fg.inverted" py={{base: 16, md: 20}} mt="10">
         <Container maxW="2xl">
             <Heading as="h2" size={{base: "xl", md: "2xl"}} mb="4">
@@ -308,12 +328,33 @@ const Closing: FC = () => (
             <Text opacity="0.75" maxW="50ch" mb="8" fontSize="lg">
                 Пишіть — розповім, на якому етапі зараз пристрій, і покажу, як він працює насправді.
             </Text>
-            <Button asChild size="lg" colorPalette="orange" rounded="full">
-                <a href="mailto:hello@tsutsyk.live">
-                    Написати мені
-                    <LuArrowRight />
-                </a>
-            </Button>
+            <HStack gap="4" wrap="wrap" align="start">
+                <MonopayButton
+                    productId={productId}
+                    size="lg"
+                    colorPalette="orange"
+                    rounded="full"
+                    caption={null}
+                >
+                    Передзамовити за {price}
+                </MonopayButton>
+                {/* Explicit colours: this panel is bg.inverted, and the default
+                    outline recipe resolves to the gray palette's dark fg. */}
+                <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    rounded="full"
+                    color="fg.inverted"
+                    borderColor="fg.inverted/30"
+                    _hover={{bg: "fg.inverted/10"}}
+                >
+                    <a href="mailto:hello@tsutsyk.live">
+                        Написати мені
+                        <LuArrowRight />
+                    </a>
+                </Button>
+            </HStack>
         </Container>
     </Box>
 );
@@ -328,12 +369,12 @@ const Footer: FC = () => (
     </Box>
 );
 
-const Landing: FC = () => (
+const Landing: FC<LandingProps> = (props) => (
     <Box>
         <NavBar />
-        <Hero />
+        <Hero {...props} />
         <Story />
-        <Closing />
+        <Closing {...props} />
         <Footer />
     </Box>
 );
