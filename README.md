@@ -28,12 +28,19 @@ app.
 
 ### Flow
 
-1. `PayButton` calls the `startCheckout` Server Action with a product id and a
-   quantity — never an amount.
-2. The action prices it from the server-side catalogue, creates an invoice via
-   `POST /api/merchant/invoice/create`, and returns `pageUrl`.
-3. The browser navigates there. monobank returns the buyer to `redirectUrl`
-   when they are done, whether they paid or not.
+1. `PayButton` is a form posting to the `startCheckout` Server Action, carrying
+   a product id and a quantity — never an amount.
+2. The action prices it from the server-side catalogue and creates an invoice
+   via `POST /api/merchant/invoice/create`.
+3. It answers with a redirect to monobank's payment page. Because that is a real
+   form submission answered with a 303, checkout works with JavaScript
+   disabled. monobank returns the buyer to `redirectUrl` when they are done,
+   whether they paid or not.
+
+`redirect` is called outside the `try` block: it works by throwing, so a catch
+around it would turn a successful checkout into an error message. Nothing is
+revalidated — no state of ours changes here, since the payment record is not
+written until the webhook arrives.
 4. monobank POSTs status changes to `/api/monobank/webhook`, which verifies the
    `X-Sign` signature before recording anything.
 
