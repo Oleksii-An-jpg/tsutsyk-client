@@ -63,11 +63,25 @@ going live, check these against the "JavaScript виджет" and "Прикла�
 - the widget script URL and its `ui` / callback options
 - whether the ECDSA signature should be DER (Node's default) or `ieee-p1363`
 
-### Not included
+### Webhook
 
-There is no webhook and no order record. The `onSuccess` callback runs in the
-browser and cannot be trusted for fulfilment — add the signed webhook before
-shipping anything that actually ships a tracker.
+`POST /api/monobank/webhook` is the only trustworthy signal that a payment
+happened — the widget's `onSuccess` runs in the buyer's browser and can be
+faked. It verifies the `X-Sign` signature against the merchant public key
+(`GET /api/merchant/pubkey`, which is what `MONOBANK_ACQUIRING_TOKEN` is for)
+over the raw request body, then records the payment in Firestore under
+`payments/<invoiceId>`.
+
+Because our server never creates the invoice, the webhook *creates* the record
+rather than updating one. It is idempotent — monobank retries, and a
+redelivery rewrites the same values — and deliveries that arrive out of order
+cannot walk a settled payment back to an in-flight status.
+
+monobank cannot POST to `localhost`, so to exercise it locally, expose the dev
+server through a tunnel (`cloudflared tunnel --url https://localhost:3000`) and
+register that host as your webhook URL.
+
+Fulfilment (confirmation email, assembly queue) is still a TODO in the route.
 
 ## Learn More
 
