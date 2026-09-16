@@ -20,54 +20,54 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Payments (monobank / monopay)
+## The monopay button
 
-The pre-order button on the landing page opens a [monopay](https://monobank.ua/api-docs/acquiring)
-invoice and hands the buyer over to monobank's hosted payment page.
+The landing page renders monobank's [monopay button](https://monobank.ua/api-docs/acquiring/methods/monopay/docs--about-button).
+The widget creates the invoice, shows the QR on desktop and hands off to the
+monobank app on mobile — we only sign the order.
 
 ### Flow
 
-1. `MonopayButton` (client) calls the `startCheckout` Server Action with a
-   product id and a quantity — never an amount.
-2. The action looks the price up in the server-side catalogue, creates an
-   invoice via `POST /api/merchant/invoice/create`, records the order in
-   Firestore, and returns `pageUrl`.
-3. The browser navigates to `pageUrl`. monobank sends the buyer back to
-   `/order/<reference>` when they are done.
-4. monobank POSTs status changes to `/api/monobank/webhook`, which verifies the
-   `X-Sign` signature against the merchant public key before touching anything.
-5. `/order/<reference>` reconciles against the status endpoint, because the
-   redirect usually arrives before the webhook does.
+1. `MonopayButton` calls the `prepareMonopayOrder` Server Action with a product
+   id and a quantity — never an amount.
+2. The action prices it from the server-side catalogue and signs it:
+   `payloadBase64 = base64(JSON.stringify(orderData))`,
+   `signature = sign(JSON.stringify(orderData) + requestId)`.
+3. The client passes `{keyId, requestId, payloadBase64, signature}` to
+   `MonoPay.init(...)` and mounts the button element it returns.
+4. The widget takes over from the click onward and calls `onSuccess`.
 
 ### Files
 
 | Path | Role |
 | --- | --- |
-| `app/_lib/monobank.ts` | API client and webhook signature verification |
 | `app/_lib/products.ts` | Product catalogue and prices (server-side only) |
-| `app/_lib/orders.ts` | Order records in Firestore |
-| `app/_actions/checkout.ts` | `startCheckout` Server Action |
+| `app/_lib/monopay.ts` | Order signing |
+| `app/_actions/monopay.ts` | `prepareMonopayOrder` Server Action |
 | `app/_components/monopay-button/` | The button |
-| `app/api/monobank/webhook/route.ts` | Status callbacks |
-| `app/order/[reference]/` | Post-payment status page |
 
 ### Setup
 
-Copy the payment variables from `.env.example` and fill in
-`MONOBANK_ACQUIRING_TOKEN` from the merchant dashboard
-(Еквайринг та послуги → API). Start with a **test** token — it issues payable
-invoices that move no real money.
+See `.env.example` for the one-time key generation and import. In short:
+generate an ECDSA P-256 pair, import the public half through
+`POST /api/merchant/monopay/pubkey-import` to get a `keyId`, and keep the
+private half in `MONOPAY_PRIVATE_KEY`.
 
-monobank cannot POST a webhook to `localhost`, so for local testing expose the
-dev server through a tunnel and point `NEXT_PUBLIC_SITE_URL` at it:
+### Still to verify
 
-```bash
-cloudflared tunnel --url https://localhost:3000
-NEXT_PUBLIC_SITE_URL=https://<tunnel-host> npm run dev
-```
+The saved docs cover the flow but not the widget's JavaScript surface. Before
+going live, check these against the "JavaScript виджет" and "Приклади
+формування підпису даних замовлення" pages:
 
-Without a tunnel the button and the redirect still work; only the webhook is
-missing, and the order page recovers from that by polling the status endpoint.
+- the `orderData` field names in `app/_lib/monopay.ts`
+- the widget script URL and its `ui` / callback options
+- whether the ECDSA signature should be DER (Node's default) or `ieee-p1363`
+
+### Not included
+
+There is no webhook and no order record. The `onSuccess` callback runs in the
+browser and cannot be trusted for fulfilment — add the signed webhook before
+shipping anything that actually ships a tracker.
 
 ## Learn More
 

@@ -234,17 +234,16 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
             </Text>
 
             {/* Пристрої збираються поштучно, тож це передзамовлення, а не
-                покупка зі складу — формулювання має збігатися з таймлайном нижче. */}
-            <Box mb="10">
-                <MonopayButton
-                    productId={productId}
-                    size="lg"
-                    colorPalette="orange"
-                    rounded="full"
-                >
-                    Передзамовити за {price}
-                </MonopayButton>
-            </Box>
+                покупка зі складу — формулювання має збігатися з таймлайном нижче.
+                Ціна стоїть поруч, бо кнопку малює віджет monopay, і її напис
+                нам не належить. */}
+            <VStack align="start" gap="3" mb="10">
+                <HStack gap="2" align="baseline">
+                    <Text fontSize="2xl" fontWeight="bold">{price}</Text>
+                    <Text fontSize="sm" color="fg.muted">передзамовлення</Text>
+                </HStack>
+                <MonopayButton productId={productId} />
+            </VStack>
 
             <Card.Root
                 display="inline-flex"
@@ -319,7 +318,7 @@ const Story: FC = () => (
     </Box>
 );
 
-const Closing: FC<LandingProps> = ({productId, price}) => (
+const Closing: FC = () => (
     <Box as="section" bg="bg.inverted" color="fg.inverted" py={{base: 16, md: 20}} mt="10">
         <Container maxW="2xl">
             <Heading as="h2" size={{base: "xl", md: "2xl"}} mb="4">
@@ -328,33 +327,12 @@ const Closing: FC<LandingProps> = ({productId, price}) => (
             <Text opacity="0.75" maxW="50ch" mb="8" fontSize="lg">
                 Пишіть — розповім, на якому етапі зараз пристрій, і покажу, як він працює насправді.
             </Text>
-            <HStack gap="4" wrap="wrap" align="start">
-                <MonopayButton
-                    productId={productId}
-                    size="lg"
-                    colorPalette="orange"
-                    rounded="full"
-                    caption={null}
-                >
-                    Передзамовити за {price}
-                </MonopayButton>
-                {/* Explicit colours: this panel is bg.inverted, and the default
-                    outline recipe resolves to the gray palette's dark fg. */}
-                <Button
-                    asChild
-                    size="lg"
-                    variant="outline"
-                    rounded="full"
-                    color="fg.inverted"
-                    borderColor="fg.inverted/30"
-                    _hover={{bg: "fg.inverted/10"}}
-                >
-                    <a href="mailto:hello@tsutsyk.live">
-                        Написати мені
-                        <LuArrowRight />
-                    </a>
-                </Button>
-            </HStack>
+            <Button asChild size="lg" colorPalette="orange" rounded="full">
+                <a href="mailto:hello@tsutsyk.live">
+                    Написати мені
+                    <LuArrowRight />
+                </a>
+            </Button>
         </Container>
     </Box>
 );
@@ -374,7 +352,7 @@ const Landing: FC<LandingProps> = (props) => (
         <NavBar />
         <Hero {...props} />
         <Story />
-        <Closing {...props} />
+        <Closing />
         <Footer />
     </Box>
 );
