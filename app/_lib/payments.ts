@@ -42,15 +42,21 @@ function isFinal(status: InvoiceStatus): boolean {
  * with the greater `modifiedDate` is the current one. So that field decides,
  * not arrival order.
  *
- * When a timestamp is missing on either side there is nothing to compare, and
- * we fall back to refusing to walk a settled payment back to an in-flight one.
+ * Equal timestamps are common rather than exotic: monobank's are
+ * second-granularity, and a card payment moving `processing` -> `success`
+ * inside one second is ordinary. Treating a tie as stale would discard the
+ * success and leave a paid order unfulfilled, so a tie falls through to the
+ * same rule used when a timestamp is missing entirely — refuse only to walk a
+ * settled payment back to an in-flight one.
  */
 function supersedes(
     incoming: InvoiceWebhookPayload,
     stored: Pick<Payment, "status" | "modifiedDate">
 ): boolean {
     if (incoming.modifiedDate && stored.modifiedDate) {
-        return incoming.modifiedDate > stored.modifiedDate;
+        if (incoming.modifiedDate > stored.modifiedDate) return true;
+        if (incoming.modifiedDate < stored.modifiedDate) return false;
+        // Equal — fall through.
     }
     return !(isFinal(stored.status) && !isFinal(incoming.status));
 }

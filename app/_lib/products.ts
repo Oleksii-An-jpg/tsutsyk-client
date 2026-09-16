@@ -30,7 +30,26 @@ export type Product = {
  * *build* time as well as at runtime. Setting it for the running server alone
  * would show the old price and charge the new one.
  */
-const TRACKER_PRICE = Number(process.env.TSUTSYK_PRICE_KOPIYKAS ?? 490_000);
+function resolvePrice(fallback: number): number {
+    const raw = process.env.TSUTSYK_PRICE_KOPIYKAS;
+    if (!raw) return fallback;
+
+    // `??` alone would not catch `TSUTSYK_PRICE_KOPIYKAS=`, which deploy
+    // platforms set routinely — and `Number("")` is 0, which would put the
+    // tracker on sale for nothing. Anything that is not a positive whole
+    // number of kopiykas falls back loudly rather than mispricing in silence.
+    const parsed = Number(raw);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        console.warn(
+            `[products] ignoring TSUTSYK_PRICE_KOPIYKAS=${JSON.stringify(raw)} — not a positive integer`
+        );
+        return fallback;
+    }
+
+    return parsed;
+}
+
+const TRACKER_PRICE = resolvePrice(490_000);
 
 export const PRODUCTS = {
     "tsutsyk-tracker": {

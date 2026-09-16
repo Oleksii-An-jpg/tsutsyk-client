@@ -110,8 +110,8 @@ NEXT_PUBLIC_SITE_URL=https://<tunnel-host> npx next dev
 ```
 
 Then buy something from the landing page with `4242424242424242`, any future
-date, any CVV. `npm run sandbox:invoice` creates an invoice directly if you want
-to skip the UI, and `-- --status <invoiceId>` reads one back.
+date, any CVV. monobank POSTs a genuinely signed webhook to the tunnel, which
+exercises the signature verification and the Firestore write for real.
 
 Fulfilment (confirmation email, assembly queue) is still a TODO in the route.
 

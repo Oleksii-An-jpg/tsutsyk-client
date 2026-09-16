@@ -216,10 +216,26 @@ async function fetchPublicKey(): Promise<string> {
 // Memoised: the key only changes when the merchant rotates it, which is why a
 // failed check refetches once before giving up.
 let cachedPublicKey: string | null = null;
+let fetchedAt = 0;
+
+/**
+ * Least time between forced refreshes.
+ *
+ * The webhook is public and unauthenticated, so anyone can post a bad
+ * signature. Refreshing on every failure would let that traffic drive one
+ * uncached request to monobank per attempt, and once they rate-limit us
+ * `fetchPublicKey` throws and genuine callbacks start failing too. Rotations
+ * are rare; waiting a few minutes to notice one is the cheaper trade.
+ */
+const REFRESH_COOLDOWN_MS = 5 * 60 * 1000;
 
 async function getPublicKey(forceRefresh = false): Promise<string> {
-    if (!cachedPublicKey || forceRefresh) {
+    if (!cachedPublicKey) {
         cachedPublicKey = await fetchPublicKey();
+        fetchedAt = Date.now();
+    } else if (forceRefresh && Date.now() - fetchedAt >= REFRESH_COOLDOWN_MS) {
+        cachedPublicKey = await fetchPublicKey();
+        fetchedAt = Date.now();
     }
     return cachedPublicKey;
 }
