@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "codegen": "npx graphql-code-generator --config codegen.ts"
+    "codegen": "npx graphql-code-generator --config codegen.ts",
+    "sandbox:invoice": "node scripts/sandbox-invoice.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.1.9",

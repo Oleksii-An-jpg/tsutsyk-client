@@ -86,6 +86,31 @@ Two more things worth knowing:
   export of `private.pem` you have will work.
 - The widget is still in beta, per monobank's docs.
 
+### Testing without the button
+
+The button needs production credentials, but everything behind it does not.
+The invoice API works in the sandbox, and its hosted payment page takes test
+cards — so you can drive a real payment, and a real signed webhook, with a test
+token and no money:
+
+```bash
+cloudflared tunnel --url https://localhost:3000
+NEXT_PUBLIC_SITE_URL=https://<tunnel-host> npm run dev
+
+# in another shell
+MONOBANK_ACQUIRING_TOKEN=... NEXT_PUBLIC_SITE_URL=https://<tunnel-host> \
+  npm run sandbox:invoice -- --amount 100
+```
+
+Open the printed URL and pay with any Luhn-valid card number (4242424242424242,
+any future date, any CVV). monobank then POSTs a genuinely signed webhook to the
+tunnel, which exercises the signature verification and the Firestore record —
+the parts the button cannot reach yet.
+
+`npm run sandbox:invoice -- --status <invoiceId>` reads an invoice back. The
+script refuses to be quiet about a production token, since a payment there is
+real.
+
 ### Webhook
 
 `POST /api/monobank/webhook` is the only trustworthy signal that a payment
