@@ -1,6 +1,6 @@
 'use client';
 
-import {FC, ReactNode} from "react";
+import {FC, ReactNode, Suspense} from "react";
 import {BiSolidBatteryCharging} from "react-icons/bi";
 import {
     Avatar,
@@ -30,13 +30,19 @@ import {
 import Link from "next/link";
 import {ColorModeButton} from "@/components/ui/color-mode";
 import PayButton from "@/app/_components/pay-button";
+import OrderNotice from "@/app/_components/order-notice";
 
 const CONTENT_WIDTH = "3xl";
 
 export type LandingProps = {
     productId: string;
-    /** Formatted on the server — the price catalogue never reaches the browser. */
-    price: string;
+    /**
+     * Formatted on the server — the price catalogue never reaches the browser.
+     * Null when the API could not be reached: better an unpriced shop window
+     * than an error page, and monobank quotes the price again before anyone
+     * pays.
+     */
+    price: string | null;
 };
 
 const FEATURES = [
@@ -214,6 +220,13 @@ const NavBar: FC = () => (
 const Hero: FC<LandingProps> = ({productId, price}) => (
     <Box as="header" pt={{base: 14, md: 20}} pb={{base: 10, md: 14}}>
         <Container maxW={CONTENT_WIDTH}>
+            {/* Reads the ?order= monobank sends the buyer back with. Behind a
+                Suspense boundary because useSearchParams would otherwise drag
+                this whole prerendered page into client-side rendering. */}
+            <Suspense fallback={null}>
+                <OrderNotice/>
+            </Suspense>
+
             <HStack colorPalette="orange" gap="2" mb="5">
                 <Box boxSize="1.5" rounded="full" bg="colorPalette.solid" />
                 <Text fontSize="sm" fontWeight="medium" color="colorPalette.fg">
@@ -242,7 +255,7 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
                     colorPalette="orange"
                     rounded="full"
                 >
-                    Передзамовити за {price} (тестується)
+                    {price ? `Передзамовити за ${price} (тестується)` : "Передзамовити (тестується)"}
                 </PayButton>
             </Box>
 

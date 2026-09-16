@@ -20,100 +20,66 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Payments (monobank internet acquiring)
+## Payments and orders
 
-The pre-order button opens a monobank invoice and hands the buyer to monobank's
-hosted payment page, which offers card, Apple Pay, Google Pay and the monobank
-app.
+The pre-order button places an order through **tsutsyk-api** and hands the
+buyer to monobank's hosted payment page, which offers card, Apple Pay, Google
+Pay and the monobank app.
+
+This app does not talk to monobank. The merchant token, the invoice, the
+webhook and the order itself all live in the API, so the token never reaches
+this deployment and there is one place that knows what an order costs.
 
 ### Flow
 
 1. `PayButton` is a form posting to the `startCheckout` Server Action, carrying
-   a product id and a quantity — never an amount.
-2. The action prices it from the server-side catalogue and creates an invoice
-   via `POST /api/merchant/invoice/create`.
-3. It answers with a redirect to monobank's payment page. Because that is a real
-   form submission answered with a 303, checkout works with JavaScript
-   disabled. monobank returns the buyer to `redirectUrl` when they are done,
-   whether they paid or not.
+   a product id and a quantity — never an amount. A signed-in buyer's Firebase
+   ID token rides along in a hidden field, because a Server Action runs on the
+   server where the session in this tab does not exist.
+2. The action calls `placeOrder` on the API. The API prices the basket from its
+   own catalogue, writes the order, and opens the monobank invoice.
+3. It answers with a redirect to monobank's payment page. Because that is a
+   real form submission answered with a 303, checkout works with JavaScript
+   disabled. `redirect` is called outside the `try` block: it works by
+   throwing, so a catch around it would turn a successful checkout into an
+   error message.
+4. monobank returns the buyer to `NEXT_PUBLIC_SITE_URL/?order=<number>`,
+   whether they paid or not, and `OrderNotice` shows them that number. The
+   payment itself is confirmed by the webhook the API receives — arriving at
+   this URL proves nothing.
 
-`redirect` is called outside the `try` block: it works by throwing, so a catch
-around it would turn a successful checkout into an error message. Nothing is
-revalidated — no state of ours changes here, since the payment record is not
-written until the webhook arrives.
-4. monobank POSTs status changes to `/api/monobank/webhook`, which verifies the
-   `X-Sign` signature before recording anything.
-
-Only `redirectUrl` is used: `successUrl` and `failUrl` have to be enabled by
-monobank support and are not available by default.
+An order placed while signed in is already attached to the account. One placed
+as a guest is claimed afterwards with its number, through the API's
+`claimOrder`. Either way the customer manages it — delivery details, tracking,
+retrying a payment, cancelling — through the API; see its README.
 
 ### Files
 
 | Path | Role |
 | --- | --- |
-| `app/_lib/products.ts` | Product catalogue and prices (server-side only) |
-| `app/_lib/monobank.ts` | Invoice create/status, webhook signature verification |
-| `app/_lib/payments.ts` | Payment records in Firestore |
+| `app/_lib/api.ts` | Server-side GraphQL calls to tsutsyk-api |
+| `app/_lib/catalogue.ts` | The catalogue, read from the API, and price formatting |
 | `app/_actions/checkout.ts` | `startCheckout` Server Action |
 | `app/_components/pay-button/` | The button |
-| `app/api/monobank/webhook/route.ts` | Status callbacks |
+| `app/_components/order-notice/` | The order number, after monobank hands the buyer back |
 
 ### Setup
 
-Put a merchant token in `MONOBANK_ACQUIRING_TOKEN` and your public origin in
-`NEXT_PUBLIC_SITE_URL`. That is the whole configuration.
-
-A **test** token from api.monobank.ua gives you a full sandbox: no terminal, no
-approval, and a payment page that accepts any Luhn-valid card number.
-`GET /api/merchant/details` tells you which you have — a `test_`-prefixed
-`merchantId` is the sandbox.
-
-### Webhook
-
-`POST /api/monobank/webhook` is the only trustworthy signal that a payment
-happened. It verifies the `X-Sign` signature against the merchant public key
-(`GET /api/merchant/pubkey`) over the raw request body, then records the payment
-in Firestore under `payments/<invoiceId>`.
-
-Two things monobank's own docs force:
-
-- **Ordering.** Delivery order is not guaranteed — a `success` can arrive before
-  the `processing` that preceded it. The payload with the greater `modifiedDate`
-  wins, so that field decides which status is current, not arrival order.
-- **`expired` sends no webhook.** It is the one status that never calls back, so
-  an abandoned invoice is only observable by polling
-  `GET /api/merchant/invoice/status`.
-
-Redeliveries are idempotent, and fulfilment is guarded on the payment actually
-advancing so a retry cannot fire it twice.
+Point `API_GRAPHQL_URL` at the API and set `NEXT_PUBLIC_SITE_URL` to this
+deployment's public origin. That is the whole configuration — see
+`.env.example`. Acquiring credentials belong in the API.
 
 ### Testing locally
 
-The sandbox payment page takes test cards, so you can drive a real payment and
-a real signed webhook without money. monobank cannot POST to `localhost`, so
-expose the dev server first. With nothing to install:
+Run the API with a monobank **test** token (`GET /api/merchant/details` tells
+you: a `test_`-prefixed `merchantId` is the sandbox) and point
+`API_GRAPHQL_URL` at it. The sandbox payment page accepts any Luhn-valid card
+number — `4242424242424242`, any future date, any CVV — so you can drive a real
+payment and a real signed webhook without money.
 
-```bash
-ssh -R 80:localhost:3000 nokey@localhost.run    # prints an https URL
-```
-
-or `brew install cloudflared && cloudflared tunnel --url http://localhost:3000`.
-Tunnel to **http** — `npm run dev` serves a self-signed certificate that tunnels
-reject, so use `npx next dev` while testing. `next.config.ts` already allows
-these tunnel hosts as dev origins.
-
-The checkout action builds both callback URLs from `NEXT_PUBLIC_SITE_URL`, so
-the dev server needs it — start it with the hostname the tunnel printed:
-
-```bash
-NEXT_PUBLIC_SITE_URL=https://<tunnel-host> npx next dev
-```
-
-Then buy something from the landing page with `4242424242424242`, any future
-date, any CVV. `npm run sandbox:invoice` creates an invoice directly if you want
-to skip the UI, and `-- --status <invoiceId>` reads one back.
-
-Fulfilment (confirmation email, assembly queue) is still a TODO in the route.
+monobank cannot POST to `localhost`, so the **API** is the one that needs to be
+reachable from the internet; see its README for the tunnel. This app only needs
+to reach the API.
 
 ## Learn More
 

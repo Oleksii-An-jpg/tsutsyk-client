@@ -1,22 +1,28 @@
 'use server'
 
-import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { createInvoice, MonobankError, UAH } from "@/app/_lib/monobank";
-import { getProduct } from "@/app/_lib/products";
-
-/** How long the payment page stays open. */
-const VALIDITY_SECONDS = 3 * 60 * 60;
+import { ApiError, callApi } from "@/app/_lib/api";
 
 /** Non-null only when checkout failed — success leaves via a redirect. */
 export type CheckoutState = { error: string } | null;
 
+const PLACE_ORDER = /* GraphQL */ `
+    mutation PlaceOrder($input: PlaceOrderInput!) {
+        placeOrder(input: $input) {
+            pageUrl
+            order {
+                id
+            }
+        }
+    }
+`;
+
 /**
- * Absolute origin of this deployment, for the URLs monobank calls back on.
- * Prefer the configured value; fall back to the incoming request so a preview
- * deployment works without extra configuration.
+ * Absolute origin of this deployment, for the URL monobank returns the buyer
+ * to. Prefer the configured value; fall back to the incoming request so a
+ * preview deployment works without extra configuration.
  */
 async function resolveBaseUrl(): Promise<string> {
     const configured = process.env.NEXT_PUBLIC_SITE_URL;
@@ -25,76 +31,69 @@ async function resolveBaseUrl(): Promise<string> {
     const headersList = await headers();
     const host = headersList.get("x-forwarded-host") ?? headersList.get("host");
     const proto = headersList.get("x-forwarded-proto") ?? "https";
-    if (!host) throw new Error("cannot resolve the site URL for monobank callbacks");
+    if (!host) throw new Error("cannot resolve the site URL for the return trip");
     return `${proto}://${host}`;
 }
 
 /**
- * Opens an invoice and sends the buyer to monobank's payment page.
+ * Places the order through the API and sends the buyer to monobank's payment
+ * page.
  *
  * Takes `FormData` so the button can be a real form: submitted that way the
  * whole checkout works with JavaScript disabled, which a click handler calling
  * `window.location` cannot do.
  *
  * A Server Action is a public endpoint, so this trusts nothing from the caller
- * but a product id and a quantity — the price comes from the server-side
- * catalogue. Otherwise the amount could simply be edited on its way in.
+ * but a product id and a quantity — the API prices the order from its own
+ * catalogue. The ID token, when the buyer is signed in, only ever widens what
+ * the API does with the order: it attaches it to their account, so it shows up
+ * under their orders without being claimed by hand.
  */
 export async function startCheckout(
     _previous: CheckoutState,
     formData: FormData
 ): Promise<CheckoutState> {
-    const product = getProduct(String(formData.get("productId") ?? ""));
-    if (!product) {
+    const productId = String(formData.get("productId") ?? "");
+    if (!productId) {
         return { error: "Такого товару немає." };
     }
 
     const quantity = Number(formData.get("quantity") ?? 1);
-    if (!Number.isInteger(quantity) || quantity < 1 || quantity > product.maxQuantity) {
-        return { error: `Можна замовити від 1 до ${product.maxQuantity} шт. за раз.` };
+    if (!Number.isInteger(quantity) || quantity < 1) {
+        return { error: "Кількість має бути цілим числом, від 1." };
     }
 
-    const amount = product.price * quantity;
-    const reference = randomUUID();
+    const idToken = String(formData.get("idToken") ?? "") || null;
 
     let pageUrl: string;
 
     try {
         const baseUrl = await resolveBaseUrl();
 
-        const invoice = await createInvoice({
-            amount,
-            ccy: UAH,
-            reference,
-            destination: `Передзамовлення: ${product.name}`,
-            comment: product.description,
-            basketOrder: [
-                {
-                    name: product.name,
-                    qty: quantity,
-                    sum: amount,
-                    unit: product.unit,
-                    code: product.id,
-                    icon: `${baseUrl}${product.image}`,
+        const { placeOrder } = await callApi<{
+            placeOrder: { pageUrl: string; order: { id: string } };
+        }>(
+            PLACE_ORDER,
+            {
+                input: {
+                    items: [{ productId, quantity }],
+                    redirectUrl: baseUrl,
                 },
-            ],
-            // Only redirectUrl — successUrl and failUrl need enabling by
-            // monobank support, so one return address covers both outcomes.
-            redirectUrl: baseUrl,
-            webHookUrl: `${baseUrl}/api/monobank/webhook`,
-            validity: VALIDITY_SECONDS,
-        });
+            },
+            { idToken }
+        );
 
-        pageUrl = invoice.pageUrl;
+        pageUrl = placeOrder.pageUrl;
     } catch (error) {
-        // The raw error can carry the merchant token — log it server-side and
-        // hand the buyer something they can act on.
-        console.error("[acquiring] checkout failed", error);
+        // The API's messages are written for developers, and can name the
+        // reason an invoice was refused — log them, and hand the buyer
+        // something they can act on.
+        console.error("[checkout] could not place the order", error);
 
         return {
             error:
-                error instanceof MonobankError
-                    ? "monobank не прийняв платіж. Спробуйте ще раз за хвилину."
+                error instanceof ApiError
+                    ? "Не вдалося створити платіж. Спробуйте ще раз за хвилину."
                     : "Не вдалося створити платіж. Спробуйте ще раз.",
         };
     }
