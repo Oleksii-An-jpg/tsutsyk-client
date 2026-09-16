@@ -93,11 +93,22 @@ The invoice API works in the sandbox, and its hosted payment page takes test
 cards — so you can drive a real payment, and a real signed webhook, with a test
 token and no money:
 
-```bash
-cloudflared tunnel --url https://localhost:3000
-NEXT_PUBLIC_SITE_URL=https://<tunnel-host> npm run dev
+Any tunnel works. With nothing to install:
 
-# in another shell
+```bash
+ssh -R 80:localhost:3000 nokey@localhost.run    # prints an https URL
+```
+
+or `brew install cloudflared && cloudflared tunnel --url http://localhost:3000`.
+Tunnel to **http**, not https — `npm run dev` serves a self-signed certificate
+that tunnels reject. Use `npx next dev` (without `--experimental-https`) while
+testing this, and note that `next.config.ts` already allows these tunnel hosts
+as dev origins.
+
+```bash
+npx next dev
+
+# in another shell, with the hostname the tunnel printed
 MONOBANK_ACQUIRING_TOKEN=... NEXT_PUBLIC_SITE_URL=https://<tunnel-host> \
   npm run sandbox:invoice -- --amount 100
 ```
