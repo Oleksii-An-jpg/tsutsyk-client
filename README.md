@@ -78,6 +78,12 @@ against a test merchant. `GET /api/merchant/details` tells you which you have â€
 a `test_`-prefixed `merchantId` means the button will not work. It needs a
 production merchant token, and the button enabled for that merchant.
 
+Ruled out along the way, so you need not repeat it: the error is not about the
+request origin. It is identical from `localhost` and from a public https tunnel
+host. The order reaching `MonoPay.init` was also verified correct â€” keyId
+matching `pubkey-list`, well-formed `payloadBase64`, a valid 71-byte P-256 DER
+signature. The failure is purely which environment the key lives in.
+
 Two more things worth knowing:
 
 - monobank's own sample signing code only accepts a PKCS#8
