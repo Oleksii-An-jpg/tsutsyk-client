@@ -10,10 +10,11 @@ import { recordPayment } from "@/app/_lib/payments";
 export const runtime = "nodejs";
 
 /**
- * monopay status callbacks.
+ * Invoice status callbacks.
  *
- * This is the only trustworthy signal that a payment happened — the widget's
- * `onSuccess` runs in the buyer's browser and can be faked.
+ * This is the only trustworthy signal that a payment happened. The buyer
+ * returning to `redirectUrl` means only that they came back — the browser can
+ * be sent there without paying anything.
  *
  * monobank retries non-2xx responses, so the only things that return an error
  * are conditions a retry could actually fix.
@@ -32,12 +33,12 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         // Could not reach monobank for the public key. 500 so the callback is
         // redelivered once we can verify it again.
-        console.error("[monopay] could not verify webhook signature", error);
+        console.error("[acquiring] could not verify webhook signature", error);
         return new Response("Verification unavailable", { status: 500 });
     }
 
     if (!verified) {
-        console.warn("[monopay] rejected webhook with a bad signature");
+        console.warn("[acquiring] rejected webhook with a bad signature");
         return new Response("Invalid signature", { status: 401 });
     }
 
@@ -61,7 +62,7 @@ export async function POST(request: NextRequest) {
             // queue entry belong here. Guarded by `changed` so a redelivery
             // cannot send a second confirmation.
             console.info(
-                `[monopay] invoice ${payload.invoiceId} paid: ${payload.amount} (${payload.ccy})`
+                `[acquiring] invoice ${payload.invoiceId} paid: ${payload.amount} (${payload.ccy})`
             );
         }
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         // Storage failure — 500 so monobank redelivers rather than letting a
         // paid order vanish.
-        console.error("[monopay] failed to record webhook", error);
+        console.error("[acquiring] failed to record webhook", error);
         return new Response("Storage error", { status: 500 });
     }
 }

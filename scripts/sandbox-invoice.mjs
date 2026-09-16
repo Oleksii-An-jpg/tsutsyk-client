@@ -2,16 +2,13 @@
 /**
  * Creates a sandbox invoice and prints its payment page.
  *
- * The monopay button cannot reach the test environment — the widget posts
- * straight to pay.monobank.ua carrying only a keyId, so a key imported with a
- * test token gets FORBIDDEN / "no client-id" (see the README). The invoice API
- * has no such problem: with a test token it returns a hosted payment page that
- * accepts any Luhn-valid card number and fires a genuine, genuinely signed
- * webhook at whatever webHookUrl you give it.
+ * Does what the checkout action does, without the browser: with a test token
+ * the invoice API returns a hosted payment page that accepts any Luhn-valid
+ * card number and fires a genuine, genuinely signed webhook at whatever
+ * webHookUrl you give it.
  *
- * So this is how you exercise everything behind the button — the webhook, its
- * signature verification and the Firestore record — without real money and
- * without waiting on monobank to enable the button.
+ * Useful for exercising the webhook, its signature verification and the
+ * Firestore record on their own, without clicking through the UI each time.
  *
  *   MONOBANK_ACQUIRING_TOKEN=... NEXT_PUBLIC_SITE_URL=https://<tunnel> \
  *     node scripts/sandbox-invoice.mjs --amount 100

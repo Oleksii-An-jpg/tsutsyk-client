@@ -1,9 +1,5 @@
 /**
- * Payment records, written by the monopay webhook.
- *
- * With the widget flow our server never creates the invoice, so the webhook is
- * the first time we hear about a payment at all — this writes the record rather
- * than updating one.
+ * Payment records, written by the acquiring webhook.
  *
  * `admin.ts` calls `initializeApp` at module scope, so it is imported lazily:
  * a top-level import would force Firebase credentials to exist whenever
@@ -15,6 +11,19 @@ import type { InvoiceStatus, InvoiceWebhookPayload } from "@/app/_lib/monobank";
 
 const COLLECTION = "payments";
 
+export type Payment = {
+    invoiceId: string;
+    status: InvoiceStatus;
+    amount: number;
+    ccy: number;
+    reference?: string;
+    failureReason?: string;
+    /** monobank's own timestamp, and the tiebreaker between two webhooks. */
+    modifiedDate?: string;
+    createdAt: string;
+    updatedAt: string;
+};
+
 /** A status no later webhook can move away from. */
 function isFinal(status: InvoiceStatus): boolean {
     return (
@@ -25,20 +34,44 @@ function isFinal(status: InvoiceStatus): boolean {
     );
 }
 
+/**
+ * Whether `incoming` describes a later state of the invoice than `stored`.
+ *
+ * monobank does not guarantee webhook ordering — the docs warn that `success`
+ * can arrive before the `processing` that preceded it — and say the payload
+ * with the greater `modifiedDate` is the current one. So that field decides,
+ * not arrival order.
+ *
+ * When a timestamp is missing on either side there is nothing to compare, and
+ * we fall back to refusing to walk a settled payment back to an in-flight one.
+ */
+function supersedes(
+    incoming: InvoiceWebhookPayload,
+    stored: Pick<Payment, "status" | "modifiedDate">
+): boolean {
+    if (incoming.modifiedDate && stored.modifiedDate) {
+        return incoming.modifiedDate > stored.modifiedDate;
+    }
+    return !(isFinal(stored.status) && !isFinal(incoming.status));
+}
+
 async function db(): Promise<Firestore> {
     const { adminDb } = await import("@/app/_lib/admin");
     return adminDb;
+}
+
+export async function getPayment(invoiceId: string): Promise<Payment | null> {
+    const store = await db();
+    const snapshot = await store.collection(COLLECTION).doc(invoiceId).get();
+    return snapshot.exists ? (snapshot.data() as Payment) : null;
 }
 
 /**
  * Records a status change, keyed by invoice.
  *
  * Idempotent, because monobank retries: redelivering the same webhook rewrites
- * the same values. Deliveries can also arrive out of order, so a status that
- * has already settled is never walked back to an in-flight one.
- *
- * Returns whether this call moved the payment to a new status, so the caller
- * can decide if there is anything to act on.
+ * the same values. Returns whether this call actually advanced the payment, so
+ * the caller can fire fulfilment exactly once.
  */
 export async function recordPayment(
     payload: InvoiceWebhookPayload
@@ -49,20 +82,18 @@ export async function recordPayment(
 
     return store.runTransaction(async (tx) => {
         const snapshot = await tx.get(ref);
-        const previous = snapshot.exists
-            ? (snapshot.data() as { status?: InvoiceStatus })
-            : null;
+        const stored = snapshot.exists ? (snapshot.data() as Payment) : null;
 
-        if (previous?.status === payload.status) {
-            return { changed: false };
-        }
-
-        // A late in-flight delivery must not overwrite a settled payment.
-        if (previous?.status && isFinal(previous.status) && !isFinal(payload.status)) {
-            console.warn(
-                `[monopay] ignoring late "${payload.status}" for settled invoice ${payload.invoiceId}`
-            );
-            return { changed: false };
+        if (stored) {
+            if (stored.status === payload.status) {
+                return { changed: false };
+            }
+            if (!supersedes(payload, stored)) {
+                console.warn(
+                    `[acquiring] ignoring stale "${payload.status}" for invoice ${payload.invoiceId}`
+                );
+                return { changed: false };
+            }
         }
 
         tx.set(
@@ -77,7 +108,10 @@ export async function recordPayment(
                 ...(payload.failureReason
                     ? { failureReason: payload.failureReason }
                     : {}),
-                ...(snapshot.exists ? {} : { createdAt: now }),
+                ...(payload.modifiedDate
+                    ? { modifiedDate: payload.modifiedDate }
+                    : {}),
+                ...(stored ? {} : { createdAt: now }),
                 updatedAt: now,
             },
             { merge: true }

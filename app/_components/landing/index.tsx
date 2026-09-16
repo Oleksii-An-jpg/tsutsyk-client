@@ -29,7 +29,7 @@ import {
 } from "react-icons/lu";
 import Link from "next/link";
 import {ColorModeButton} from "@/components/ui/color-mode";
-import MonopayButton from "@/app/_components/monopay-button";
+import PayButton from "@/app/_components/pay-button";
 
 const CONTENT_WIDTH = "3xl";
 
@@ -234,16 +234,17 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
             </Text>
 
             {/* Пристрої збираються поштучно, тож це передзамовлення, а не
-                покупка зі складу — формулювання має збігатися з таймлайном нижче.
-                Ціна стоїть поруч, бо кнопку малює віджет monopay, і її напис
-                нам не належить. */}
-            <VStack align="start" gap="3" mb="10">
-                <HStack gap="2" align="baseline">
-                    <Text fontSize="2xl" fontWeight="bold">{price}</Text>
-                    <Text fontSize="sm" color="fg.muted">передзамовлення</Text>
-                </HStack>
-                <MonopayButton productId={productId} />
-            </VStack>
+                покупка зі складу — формулювання має збігатися з таймлайном нижче. */}
+            <Box mb="10">
+                <PayButton
+                    productId={productId}
+                    size="lg"
+                    colorPalette="orange"
+                    rounded="full"
+                >
+                    Передзамовити за {price}
+                </PayButton>
+            </Box>
 
             <Card.Root
                 display="inline-flex"

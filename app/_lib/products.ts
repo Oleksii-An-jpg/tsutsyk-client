@@ -13,9 +13,9 @@ export type Product = {
     description: string;
     /** Unit price in minor units (kopiykas). */
     price: number;
-    /** Unit of measure for the monopay basket. */
+    /** Unit of measure for the invoice basket. */
     unit: string;
-    /** Absolute or root-relative image used in the monopay basket. */
+    /** Absolute or root-relative image used in the invoice basket. */
     image: string;
     /** Upper bound per order — these are assembled by hand, one at a time. */
     maxQuantity: number;
