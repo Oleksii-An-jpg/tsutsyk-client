@@ -59,7 +59,26 @@ than leaving a dead button on a page someone left open.
    `MONOPAY_PRIVATE_KEY` (single line, newlines as `\n`).
 3. Set `MONOBANK_ACQUIRING_TOKEN` and `NEXT_PUBLIC_SITE_URL`.
 
-Two things worth knowing:
+**The button cannot be exercised with a sandbox token.** monobank's testing
+docs describe a test environment for the REST API, reached by using a token
+from api.monobank.ua — but the widget never touches that API. It posts straight
+to `pay.monobank.ua`, and the only credential it carries is the `keyId`, which
+is bound to whichever merchant imported the key. So the token, the one
+environment selector monobank documents, is not in the runtime path at all, and
+no sandbox host is documented for the widget.
+
+Import the key with a test token and the button fails at invoice creation with:
+
+```
+403 {"errCode":"FORBIDDEN","errInfo":"no client-id"}
+```
+
+That is monobank failing to resolve a production client for a key registered
+against a test merchant. `GET /api/merchant/details` tells you which you have —
+a `test_`-prefixed `merchantId` means the button will not work. It needs a
+production merchant token, and the button enabled for that merchant.
+
+Two more things worth knowing:
 
 - monobank's own sample signing code only accepts a PKCS#8
   (`-----BEGIN PRIVATE KEY-----`) key, but the openssl recipe in the same docs
