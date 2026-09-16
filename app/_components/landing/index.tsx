@@ -29,8 +29,15 @@ import {
 } from "react-icons/lu";
 import Link from "next/link";
 import {ColorModeButton} from "@/components/ui/color-mode";
+import PayButton from "@/app/_components/pay-button";
 
 const CONTENT_WIDTH = "3xl";
+
+export type LandingProps = {
+    productId: string;
+    /** Formatted on the server — the price catalogue never reaches the browser. */
+    price: string;
+};
 
 const FEATURES = [
     {
@@ -66,11 +73,11 @@ type Waypoint = {
 const WAYPOINTS: Waypoint[] = [
     {
         label: "Ідея",
-        title: "Один хаскі, одна відкрита хвіртка",
+        title: "Один хасюк, одна відкрита хвіртка",
         body: (
             <VStack align="start" gap="3">
                 <Text color="fg.muted">
-                    У мене сіро-білий хаскі. Він любить свободу — і кожна прогулянка без
+                    У мене сіро-білий хасюк. Він любить свободу — і кожна прогулянка без
                     повідця означає кілька секунд справжньої тривоги: а раптом побіжить за
                     котом і зникне за рогом? Готові трекери, які я знайшов, обіцяли рішення
                     на коробці, але не працювали там, де я живу.
@@ -204,7 +211,7 @@ const NavBar: FC = () => (
     </Box>
 );
 
-const Hero: FC = () => (
+const Hero: FC<LandingProps> = ({productId, price}) => (
     <Box as="header" pt={{base: 14, md: 20}} pb={{base: 10, md: 14}}>
         <Container maxW={CONTENT_WIDTH}>
             <HStack colorPalette="orange" gap="2" mb="5">
@@ -221,10 +228,23 @@ const Hero: FC = () => (
                 </Text>
             </Heading>
 
-            <Text fontSize="lg" color="fg.muted" maxW="46ch" mb="10">
+            <Text fontSize="lg" color="fg.muted" maxW="46ch" mb="8">
                 Цуцик — це GPS/LTE-трекер на нашийник, який я спроєктував сам, тому що
-                одного разу не знав, де мій хаскі, і ця мить тривоги більше не мала повторитись.
+                одного разу не знав, де мій хасюк, і ця мить тривоги більше не мала повторитись.
             </Text>
+
+            {/* Пристрої збираються поштучно, тож це передзамовлення, а не
+                покупка зі складу — формулювання має збігатися з таймлайном нижче. */}
+            <Box mb="10">
+                <PayButton
+                    productId={productId}
+                    size="lg"
+                    colorPalette="orange"
+                    rounded="full"
+                >
+                    Передзамовити за {price} (тестується)
+                </PayButton>
+            </Box>
 
             <Card.Root
                 display="inline-flex"
@@ -322,16 +342,16 @@ const Footer: FC = () => (
     <Box as="footer" py={{base: 8, md: 10}} textAlign="center">
         <Container maxW="2xl">
             <Text fontSize="sm" color="fg.muted">
-                Цуцик — особистий проєкт. Зроблено з любові до одного конкретного хаскі.
+                Цуцик — особистий проєкт. Зроблено з любові до одного конкретного хасюка.
             </Text>
         </Container>
     </Box>
 );
 
-const Landing: FC = () => (
+const Landing: FC<LandingProps> = (props) => (
     <Box>
         <NavBar />
-        <Hero />
+        <Hero {...props} />
         <Story />
         <Closing />
         <Footer />
