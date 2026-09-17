@@ -9,6 +9,7 @@ import {useEndSession} from "@/app/_lib/useTracker";
 import {SessionFragmentFragment} from "@/app/_documents/fragments/__generated__/SESSION_FRAGMENT.codegen";
 import type {userAgent} from "next/server";
 import PushNotificationManager from "@/app/_components/notification";
+import InstallPrompt from "@/app/_components/install";
 import {useOnboardingTour} from "@/app/_hooks/useOnboardingTour";
 
 type ControlsProps = {
@@ -42,7 +43,7 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
 
     return <ButtonGroup orientation="vertical" size="sm" variant="solid">
         <PushNotificationManager />
-        {/*<InstallPrompt />*/}
+        <InstallPrompt />
         <IconButton title="Завершити сесію" data-tour="stop-session" colorPalette="red" onClick={stopSession} loading={stopping}>
             <Icon size="lg">
                 <BiStop />

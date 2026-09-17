@@ -105,6 +105,55 @@ monobank cannot POST to `localhost`, so the **API** is the one that needs to be
 reachable from the internet; see its README for the tunnel. This app only needs
 to reach the API.
 
+## Installing the app
+
+The download button in the tracker controls puts Tsutsyk Live on the home
+screen. `app/manifest.ts` is what makes that possible at all — name, icons,
+`start_url`, `display: standalone` — and `app/_lib/useInstallPrompt.ts` is what
+decides whether there is anything to offer.
+
+### Two platforms, two different things to do
+
+Chromium fires `beforeinstallprompt` when it decides the app is installable.
+Holding that event back (`preventDefault`) takes its own banner down and hands
+us the prompt to fire from a button, at a moment that makes sense — next to the
+bell, where somebody has just said they want to hear from this app.
+
+iOS has no such event, and never has. Installing there is the share sheet, and
+a page cannot open it — so on iOS the button stops pretending to install and
+explains where the sheet is instead. That is not a lesser path: on iOS 16.4+
+web push only reaches apps that are **on the home screen**, so for an iPhone
+this button is what makes the bell work at all.
+
+Anywhere else — a browser that neither fires the event nor has a home screen —
+nothing is rendered. A control that can never do its one job is worse than no
+control.
+
+### Why a script in `<head>`
+
+`beforeinstallprompt` fires once per page load, and regularly before React has
+hydrated. A listener attached on mount would never hear it, and the button
+would sit dead for the life of the page. So the root layout registers one
+inline, while the document is still parsing, and parks the event on
+`window.__installPrompt` for the hook to read. It is a plain `<script>` rather
+than `next/script`: `beforeInteractive` queues inline code behind the framework
+bundle, which is the one thing this must not wait for.
+
+The hook reads all of this through `useSyncExternalStore` — the event the
+browser handed over, the display mode it is drawing in, the engine it is —
+because none of it is React's state to hold. That also means it answers
+correctly on the first client render, without copying anything into `useState`
+on mount.
+
+### The event is good for exactly one prompt
+
+Firing it twice throws. So after the browser's dialog is answered the event is
+dropped either way, and a refusal hides the button rather than leaving it to be
+clicked into an error. Chromium mints a fresh one when it is ready to ask
+again, so the offer comes back on a later visit instead of nagging on this one.
+`appinstalled` covers the other way in — somebody installing from the browser's
+own menu, which never touches our button.
+
 ## Notifications
 
 The bell in the tracker controls subscribes this browser to Web Push. The
