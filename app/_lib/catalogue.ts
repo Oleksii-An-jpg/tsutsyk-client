@@ -3,43 +3,24 @@
  *
  * Prices are not duplicated here: the same catalogue that prices the monobank
  * invoice is the one this page quotes, so the storefront can never advertise
- * a number we do not charge.
+ * a number we do not charge. The shape is not duplicated either — `Product`
+ * is read off the generated types, so a field the API renames stops this
+ * compiling rather than arriving undefined.
  */
 
-import { callApi } from "@/app/_lib/api";
+import { QUERY_PRODUCTS } from "@/app/_documents/QUERY_PRODUCTS";
+import { ProductsQuery } from "@/app/_documents/__generated__/QUERY_PRODUCTS.codegen";
+import { serverQuery } from "@/app/_lib/apollo-server";
 
-export type Product = {
-    id: string;
-    name: string;
-    description: string;
-    /** Unit price in minor units (kopiykas). */
-    price: number;
-    unit: string;
-    image: string;
-    maxQuantity: number;
-};
-
-const PRODUCTS_QUERY = /* GraphQL */ `
-    query GetProducts {
-        getProducts {
-            id
-            name
-            description
-            price
-            unit
-            image
-            maxQuantity
-        }
-    }
-`;
+export type Product = ProductsQuery["getProducts"][number];
 
 /** Prices change rarely; five minutes is plenty fresh and keeps the page static. */
 const CATALOGUE_TTL_SECONDS = 300;
 
 export async function getProducts(): Promise<Product[]> {
-    const { getProducts } = await callApi<{ getProducts: Product[] }>(
-        PRODUCTS_QUERY,
-        {},
+    const { getProducts } = await serverQuery<ProductsQuery>(
+        QUERY_PRODUCTS,
+        undefined,
         { revalidate: CATALOGUE_TTL_SECONDS }
     );
     return getProducts;
