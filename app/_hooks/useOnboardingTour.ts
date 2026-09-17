@@ -39,9 +39,6 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
     // a teardown that happens while the chunk is still loading is still seen by
     // the code that resolves after it.
     const activeRef = useRef(false);
-    // Whether this mount has raised a tour at all — the only thing a bfcache
-    // restore can go on, since nothing remounts to ask for one.
-    const raisedRef = useRef(false);
 
     const stop = useCallback(() => {
         activeRef.current = false;
@@ -57,7 +54,6 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
         if (activeRef.current) return;
 
         activeRef.current = true;
-        raisedRef.current = true;
 
         // driver.js touches `document`, so it must be imported client-side only
         const { driver } = await import("driver.js");
@@ -101,37 +97,12 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
         driverObj.drive();
     }, [steps]);
 
-    useEffect(() => {
-        // driver.js paints its overlay and popover straight onto document.body,
-        // outside React's tree, so React unmounting the buttons underneath does
-        // not take the tour with them. Leaving the map — a route change, the
-        // back button — would otherwise strand the highlight on top of a page
-        // that no longer has anything to highlight.
-        const handleNavigation = () => stop();
-
-        // Back to a previous document: with bfcache the page is restored whole,
-        // overlay included, so it has to come down before the page is frozen.
-        window.addEventListener("pagehide", handleNavigation);
-        // Back within this route (a pushed dialog, a hash) unmounts nothing, so
-        // the cleanup below never runs and this is the only signal there is.
-        window.addEventListener("popstate", handleNavigation);
-
-        // The other half of that bfcache trip: the page comes back exactly as
-        // it was frozen, minus the tour taken down on the way out, and React
-        // remounts nothing — so this is the only chance to greet someone
-        // walking back onto the map.
-        const handleRestore = (event: PageTransitionEvent) => {
-            if (event.persisted && raisedRef.current) void start();
-        };
-        window.addEventListener("pageshow", handleRestore);
-
-        return () => {
-            window.removeEventListener("pagehide", handleNavigation);
-            window.removeEventListener("popstate", handleNavigation);
-            window.removeEventListener("pageshow", handleRestore);
-            stop();
-        };
-    }, [start, stop]);
+    // driver.js paints its overlay and popover straight onto document.body,
+    // outside React's tree, so React taking the buttons away does not take the
+    // tour with them. Every way off the map is a client-side navigation, which
+    // unmounts this hook along with those buttons — so the cleanup *is* the
+    // navigation subscription, and the overlay goes when they do.
+    useEffect(() => stop, [stop]);
 
     return { start, stop };
 }
