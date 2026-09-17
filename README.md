@@ -35,10 +35,14 @@ reaches this deployment and there is one place that knows what an order costs.
    money we have to give back. The account is not friction checkout invents —
    a Tsutsyk is unusable without one — so this only moves a step the buyer
    takes anyway to where it also settles the address.
-3. The form posts to the `startCheckout` Server Action, carrying a product id,
-   a quantity, the delivery details and the buyer's Firebase ID token — never
-   an amount. The token travels in a hidden field because a Server Action runs
-   on the server, where the Firebase session in the tab does not exist.
+3. The form is react-hook-form, like every other form here. On a valid submit
+   it invokes the `startCheckout` Server Action through `useActionState` —
+   `startTransition(...)`, the way the Next docs invoke an action outside a
+   `<form action>` — with a product id, a quantity, the delivery details and
+   the buyer's Firebase ID token. Never an amount. The token is read at that
+   moment rather than kept in a field, so a page left open does not submit a
+   stale one; a Server Action runs on the server, where the Firebase session in
+   the tab does not exist.
 4. The action calls `placeOrder` on the API and answers with a redirect to
    monobank's payment page. `redirect` is called outside the `try` block: it
    works by throwing, so a catch around it would turn a successful checkout
@@ -48,9 +52,7 @@ reaches this deployment and there is one place that knows what an order costs.
    The payment itself is confirmed by the webhook the API receives — arriving
    at this URL proves nothing.
 
-Checkout needs JavaScript, since signing in does. The rest of the form is
-ordinary `FormData` posted to a Server Action, so there is no client-side state
-to lose.
+Checkout needs JavaScript, since signing in does.
 
 ### Following an order
 
@@ -67,8 +69,10 @@ without a reload.
 
 **The branch field** in `app/_components/delivery-fields/` is a plain text
 input for now — that is where the Nova Poshta branch picker goes. It is one
-component shared by checkout and the order page, and the API only checks that a
-branch is filled in, so swapping it is a change in that one file.
+registered set of fields shared by checkout and the order page, and the API
+only checks that a branch is filled in, so swapping it is a change in that one
+file. The phone field works like the sign-in one: the input holds the part
+after `+380`, and `setValueAs` puts the prefix back.
 
 ### Files
 

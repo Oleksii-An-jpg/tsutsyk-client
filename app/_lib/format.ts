@@ -23,3 +23,16 @@ export function formatDateTime(iso?: string | null): string {
         timeStyle: "short",
     }).format(new Date(iso));
 }
+
+/**
+ * The part of a Ukrainian number that goes after the `+380` the phone inputs
+ * show as a prefix — the same shape the auth form keeps in its field.
+ *
+ * `+380671234567`, `380671234567` and `0671234567` all come back as
+ * `671234567`, so a number we stored, one Firebase gave us and one somebody
+ * typed all prefill the same way.
+ */
+export function toLocalPhone(phone?: string | null): string {
+    const digits = String(phone ?? "").replace(/\D/g, "");
+    return digits.length >= 9 ? digits.slice(-9) : digits;
+}

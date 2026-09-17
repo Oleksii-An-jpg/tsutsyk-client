@@ -1,91 +1,91 @@
 'use client';
 
-import { FC } from "react";
-import { Field, Input, SimpleGrid, Stack } from "@chakra-ui/react";
+import {FC} from "react";
+import {Field, Input, InputGroup, SimpleGrid, Stack} from "@chakra-ui/react";
+import {FieldErrors, UseFormRegister} from "react-hook-form";
 
 export type DeliveryValues = {
-    recipientName?: string | null;
-    phone?: string | null;
-    city?: string | null;
-    branch?: string | null;
-    comment?: string | null;
+    recipientName: string;
+    phone: string;
+    city: string;
+    branch: string;
+    comment: string;
 };
 
 type DeliveryFieldsProps = {
-    /** What the fields start with — an order's current details, or nothing. */
-    defaults?: DeliveryValues | null;
+    register: UseFormRegister<DeliveryValues>;
+    errors: FieldErrors<DeliveryValues>;
     disabled?: boolean;
 };
 
 /**
  * Where the tracker should go.
  *
- * Plain uncontrolled inputs with `name`s, so the same fields serve the
- * checkout form (posted to a Server Action) and the order page (read as
- * FormData and sent as a mutation) — and so the branch picker, when it
- * arrives, is swapped in one place rather than two.
+ * One set of fields for both places that ask: checkout, where an order cannot
+ * be placed without them, and the order page, where they stay editable until
+ * it ships. The form around them owns the values — this only knows how to ask.
  */
-const DeliveryFields: FC<DeliveryFieldsProps> = ({ defaults, disabled }) => (
-    <Stack gap="4">
-        <SimpleGrid columns={{ base: 1, sm: 2 }} gap="4">
-            <Field.Root required>
-                <Field.Label>
-                    Отримувач <Field.RequiredIndicator />
-                </Field.Label>
+const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, disabled}) => (
+    <Stack gap={4}>
+        <SimpleGrid columns={{base: 1, sm: 2}} gap={4}>
+            <Field.Root required invalid={!!errors.recipientName}>
+                <Field.Label>Отримувач</Field.Label>
                 <Input
-                    name="recipientName"
-                    placeholder="Прізвище та ім’я"
+                    placeholder="Прізвище та ім'я"
                     autoComplete="name"
-                    required
                     disabled={disabled}
-                    defaultValue={defaults?.recipientName ?? ""}
+                    {...register('recipientName', {required: 'Вкажіть отримувача'})}
                 />
+                <Field.ErrorText>{errors.recipientName?.message}</Field.ErrorText>
             </Field.Root>
 
-            <Field.Root required>
-                <Field.Label>
-                    Телефон <Field.RequiredIndicator />
-                </Field.Label>
-                <Input
-                    name="phone"
-                    type="tel"
-                    placeholder="+380…"
-                    autoComplete="tel"
-                    required
-                    disabled={disabled}
-                    defaultValue={defaults?.phone ?? ""}
-                />
+            <Field.Root required invalid={!!errors.phone}>
+                <Field.Label>Телефон</Field.Label>
+                <InputGroup startElement="+380">
+                    <Input
+                        ps="6ch"
+                        type="tel"
+                        placeholder="501234567"
+                        autoComplete="tel-national"
+                        disabled={disabled}
+                        {...register('phone', {
+                            setValueAs(value: string) {
+                                return `+380${value.split(' ').join('')}`
+                            },
+                            pattern: {
+                                value: /^\+380\d{9}$/,
+                                message: 'Номер телефону має містити 9 цифр',
+                            },
+                        })}
+                    />
+                </InputGroup>
+                <Field.ErrorText>{errors.phone?.message}</Field.ErrorText>
+                <Field.HelperText>За ним вас знайде кур&#39;єр</Field.HelperText>
             </Field.Root>
 
-            <Field.Root required>
-                <Field.Label>
-                    Місто <Field.RequiredIndicator />
-                </Field.Label>
+            <Field.Root required invalid={!!errors.city}>
+                <Field.Label>Місто</Field.Label>
                 <Input
-                    name="city"
                     placeholder="Львів"
                     autoComplete="address-level2"
-                    required
                     disabled={disabled}
-                    defaultValue={defaults?.city ?? ""}
+                    {...register('city', {required: 'Вкажіть місто'})}
                 />
+                <Field.ErrorText>{errors.city?.message}</Field.ErrorText>
             </Field.Root>
 
             {/* TODO(delivery): a plain text box until the Nova Poshta branch
                 picker lands. The API only checks that a branch is filled in,
                 so swapping this input for the picker is a change here and
                 nowhere else. */}
-            <Field.Root required>
-                <Field.Label>
-                    Відділення <Field.RequiredIndicator />
-                </Field.Label>
+            <Field.Root required invalid={!!errors.branch}>
+                <Field.Label>Відділення</Field.Label>
                 <Input
-                    name="branch"
                     placeholder="Відділення №12, вул. Зелена 1"
-                    required
                     disabled={disabled}
-                    defaultValue={defaults?.branch ?? ""}
+                    {...register('branch', {required: 'Вкажіть відділення'})}
                 />
+                <Field.ErrorText>{errors.branch?.message}</Field.ErrorText>
                 <Field.HelperText>
                     Поки що вручну — невдовзі тут буде вибір відділення зі списку.
                 </Field.HelperText>
@@ -95,10 +95,9 @@ const DeliveryFields: FC<DeliveryFieldsProps> = ({ defaults, disabled }) => (
         <Field.Root>
             <Field.Label>Коментар</Field.Label>
             <Input
-                name="comment"
                 placeholder="Що нам варто знати про доставку"
                 disabled={disabled}
-                defaultValue={defaults?.comment ?? ""}
+                {...register('comment')}
             />
         </Field.Root>
     </Stack>
