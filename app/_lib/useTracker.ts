@@ -53,6 +53,11 @@ import {
     TsutsykPublicProfileQuery,
     TsutsykPublicProfileQueryVariables
 } from "@/app/_documents/__generated__/QUERY_TSUTSYK_PUBLIC_PROFILE.codegen";
+import {QUERY_ALERT_REGIONS} from "@/app/_documents/QUERY_ALERT_REGIONS";
+import {
+    AlertRegionsQuery,
+    AlertRegionsQueryVariables
+} from "@/app/_documents/__generated__/QUERY_ALERT_REGIONS.codegen";
 import {QUERY_MY_TSUTSYKS} from "@/app/_documents/QUERY_MY_TSUTSYKS";
 import {
     MyTsutsyksQuery,
@@ -107,7 +112,24 @@ export function useActiveSession(tsutsykId: string) {
 export function useTsutsyk(tsutsykId: string) {
     return useQuery<TsutsykQuery, TsutsykQueryVariables>(
         QUERY_TSUTSYK,
-        { variables: { id: tsutsykId }, skip: !tsutsykId }
+        {
+            variables: { id: tsutsykId },
+            skip: !tsutsykId,
+            // `airRaidStatus` rides along on this query and is the one field
+            // here that changes on its own. A minute is well inside the
+            // server's own staleness window, so the badge cannot sit on a
+            // reading the API has already stopped vouching for.
+            pollInterval: 60_000,
+        }
+    );
+}
+
+// The 27 oblasts, for the region picker. Static, so it is answered from cache
+// after the first fetch rather than refetched with every drawer open.
+export function useAlertRegions() {
+    return useQuery<AlertRegionsQuery, AlertRegionsQueryVariables>(
+        QUERY_ALERT_REGIONS,
+        { fetchPolicy: 'cache-first' }
     );
 }
 

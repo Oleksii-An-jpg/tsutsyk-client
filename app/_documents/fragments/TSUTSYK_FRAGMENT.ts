@@ -7,5 +7,10 @@ export const TSUTSYK_FRAGMENT = gql`
     photoUrl
     claimed
     alertDistanceMeters
+    alertRegion {
+      uid
+      title
+    }
+    airRaidStatus
   }
 `;

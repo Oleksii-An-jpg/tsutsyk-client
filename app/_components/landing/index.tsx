@@ -57,7 +57,7 @@ const FEATURES = [
     {
         icon: LuBellRing,
         title: "Push-сповіщення",
-        desc: "Якщо пес відійде задалеко від вас, телефон одразу сповістить — навіть якщо додаток закритий.",
+        desc: "Якщо пес відійде задалеко від вас, телефон одразу сповістить вас про це.",
     },
     {
         icon: LuRadioTower,
@@ -67,7 +67,10 @@ const FEATURES = [
     {
         icon: LuSiren,
         title: "Розуміє тривогу",
-        desc: "Під час повітряної тривоги трекер частіше оновлює позицію — саме тоді, коли це важливо.",
+        // The cadences here are the ones the API actually sends the device
+        // (tsutsyk-api/src/tracker/reporting-policy.ts) — if those change,
+        // this line is a promise that stops being true.
+        desc: "Ви вибираєте свою область — і під час повітряної тривоги трекер оновлює позицію щохвилини замість раз на 5 хвилин.",
     },
 ] as const;
 
