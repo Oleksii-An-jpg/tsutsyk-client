@@ -38,6 +38,20 @@ export default function RootLayout({
             <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
             <link rel="preconnect" href="https://maps.googleapis.com" />
             <link rel="preconnect" href="https://maps.gstatic.com" crossOrigin="anonymous" />
+            {/* Chromium fires beforeinstallprompt as soon as it decides the app
+                is installable, which is regularly before React has hydrated —
+                a listener attached on mount would never hear it, and the
+                install button would sit dead for the life of the page. So the
+                listener goes up while the document is still parsing: it holds
+                the browser's own banner back (preventDefault) and parks the
+                event where useInstallPrompt reads it. Plain inline rather than
+                next/script, which would queue this behind the framework
+                bundle — the one thing it must not wait for. */}
+            <script
+                dangerouslySetInnerHTML={{
+                    __html: `window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__installPrompt=e});`,
+                }}
+            />
             <title>Tsutsyk Live</title>
         </head>
         <body className="min-h-full flex flex-col">

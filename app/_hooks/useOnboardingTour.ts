@@ -16,6 +16,11 @@ export const tsutsykTourSteps: TourStep[] = [
         description: "Умикай, щоб завжди знати, чи цуцик поруч, чи вже пішов у пригоди!",
     },
     {
+        target: '[data-tour="install-app"]',
+        title: "Застосунок на телефоні 📲",
+        description: "Встанови Tsutsyk Live на головний екран — відкривається з одного тику, а на iPhone тільки так працюють сповіщення.",
+    },
+    {
         target: '[data-tour="stop-session"]',
         title: "Завершити сесію",
         description: "Тисни сюди, коли прилад вимкнено або прогулянка вже закінчилась.",
@@ -63,13 +68,26 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
         // StrictMode's second mount arriving first.
         if (!activeRef.current) return;
 
-        const driveSteps: DriveStep[] = steps.map((step) => ({
-            element: step.target,
-            popover: {
-                title: step.title,
-                description: step.description,
-            },
-        }));
+        // A step whose element is not on screen is not skipped by driver.js —
+        // it puts the popover in the middle of the page with nothing
+        // highlighted. The install button is the one control here that comes
+        // and goes (it is gone once the app is installed), so the steps are
+        // filtered against the DOM rather than assumed.
+        const driveSteps: DriveStep[] = steps
+            .filter((step) => document.querySelector(step.target))
+            .map((step) => ({
+                element: step.target,
+                popover: {
+                    title: step.title,
+                    description: step.description,
+                },
+            }));
+
+        // Nothing left to point at — an empty tour is driver.js throwing.
+        if (driveSteps.length === 0) {
+            activeRef.current = false;
+            return;
+        }
 
         const driverObj = driver({
             allowClose: true,
