@@ -11,11 +11,6 @@ import {
     OrderQuery,
     OrderQueryVariables,
 } from "@/app/_documents/__generated__/QUERY_ORDER.codegen";
-import { MUTATION_CLAIM_ORDER } from "@/app/_documents/MUTATION_CLAIM_ORDER";
-import {
-    ClaimOrderMutation,
-    ClaimOrderMutationVariables,
-} from "@/app/_documents/__generated__/MUTATION_CLAIM_ORDER.codegen";
 import { MUTATION_UPDATE_ORDER_DELIVERY } from "@/app/_documents/MUTATION_UPDATE_ORDER_DELIVERY";
 import {
     UpdateOrderDeliveryMutation,
@@ -53,9 +48,9 @@ export function useMyOrders({ skip }: { skip?: boolean } = {}) {
 /**
  * One order, for its owner.
  *
- * `errorPolicy: 'all'` because a perfectly ordinary case answers with an
- * error: an order paid for as a guest is nobody's until it is claimed, and
- * the page turns that into the claim step rather than a red box.
+ * `errorPolicy: 'all'` because an order number typed into the address bar by
+ * somebody it does not belong to answers with an error, and that deserves a
+ * "not found" rather than a red box.
  */
 export function useOrder(id: string, { skip }: { skip?: boolean } = {}) {
     return useQuery<OrderQuery, OrderQueryVariables>(QUERY_ORDER, {
@@ -66,14 +61,6 @@ export function useOrder(id: string, { skip }: { skip?: boolean } = {}) {
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────
-
-export function useClaimOrder() {
-    return useMutation<ClaimOrderMutation, ClaimOrderMutationVariables>(
-        MUTATION_CLAIM_ORDER,
-        // The order was not in the customer's list a moment ago, and now it is.
-        { refetchQueries: [{ query: QUERY_MY_ORDERS }] }
-    );
-}
 
 export function useUpdateOrderDelivery() {
     return useMutation<

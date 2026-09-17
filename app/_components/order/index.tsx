@@ -4,17 +4,18 @@ import { FC } from "react";
 import {
     AbsoluteCenter,
     Alert,
+    Button,
     Container,
     Spinner,
     Stack,
     Text,
 } from "@chakra-ui/react";
+import Link from "next/link";
 import { useReactiveVar } from "@apollo/client/react";
 import { me } from "@/app/_lib/me";
 import { useAdminAuth } from "@/app/_hooks/useAdminAuth";
 import { useOrder } from "@/app/_lib/useOrders";
 import AuthCard from "@/app/_components/auth";
-import ClaimOrder from "@/app/_components/order/claim";
 import OrderDetails from "@/app/_components/order/details";
 
 type OrderProps = {
@@ -27,8 +28,8 @@ type OrderProps = {
  * Outside the (private) layout on purpose: that one gates on owning a Tsutsyk,
  * and somebody who has just pre-ordered one owns nothing yet.
  *
- * An order is only readable by the account it belongs to, so this is: sign in,
- * claim it if it was bought as a guest, then the order itself.
+ * An order is only ever readable by the account that placed it, so somebody
+ * arriving here signed out is asked to sign in first.
  */
 const Order: FC<OrderProps> = ({ id }) => {
     useAdminAuth();
@@ -52,8 +53,8 @@ const Order: FC<OrderProps> = ({ id }) => {
                         <Alert.Content>
                             <Alert.Title>Замовлення {id}</Alert.Title>
                             <Alert.Description>
-                                Увійдіть — тим самим номером телефону чи поштою, що й при
-                                оформленні, — і ми покажемо статус замовлення.
+                                Увійдіть тим самим акаунтом, яким оформляли замовлення, —
+                                і ми покажемо його статус.
                             </Alert.Description>
                         </Alert.Content>
                     </Alert.Root>
@@ -66,19 +67,28 @@ const Order: FC<OrderProps> = ({ id }) => {
 
     const order = data?.getOrder;
 
-    // No order in the answer means one of two things, and neither is an error
-    // worth a red box: it is somebody else's (or nobody's yet), or there is no
-    // such number. The claim step covers the first and explains the second.
+    // Either there is no such number, or it belongs to a different account —
+    // the API does not say which, and neither should we.
     if (!order) {
         return (
             <Container maxW="2xl" py={{ base: 8, md: 16 }}>
-                <Stack gap="4">
-                    <ClaimOrder id={id} onClaimed={() => void refetch()} />
-                    <Text fontSize="sm" color="fg.muted">
-                        Якщо такого замовлення не існує — перевірте номер у листі від
-                        monobank або в адресному рядку після оплати.
-                    </Text>
-                </Stack>
+                <Alert.Root status="warning" rounded="xl">
+                    <Alert.Indicator />
+                    <Alert.Content>
+                        <Alert.Title>Замовлення {id} не знайдено</Alert.Title>
+                        <Alert.Description>
+                            <Stack align="start" gap="3">
+                                <Text>
+                                    Перевірте номер — і чи це той акаунт, яким ви
+                                    оформляли замовлення.
+                                </Text>
+                                <Button asChild size="sm" variant="outline">
+                                    <Link href="/orders">Мої замовлення</Link>
+                                </Button>
+                            </Stack>
+                        </Alert.Description>
+                    </Alert.Content>
+                </Alert.Root>
             </Container>
         );
     }

@@ -22,31 +22,35 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Payments and orders
 
-The pre-order button places an order through **tsutsyk-api** and hands the
-buyer to monobank's hosted payment page, which offers card, Apple Pay, Google
-Pay and the monobank app.
-
-This app does not talk to monobank. The merchant token, the invoice, the
-webhook and the order itself all live in the API, so the token never reaches
-this deployment and there is one place that knows what an order costs.
+Buying a Tsutsyk is: sign in, say where it should go, pay. The order is placed
+through **tsutsyk-api**, which prices it, opens the monobank invoice and owns
+it from then on. This app never talks to monobank, so the merchant token never
+reaches this deployment and there is one place that knows what an order costs.
 
 ### Flow
 
-1. `PayButton` is a form posting to the `startCheckout` Server Action, carrying
-   a product id and a quantity — never an amount. A signed-in buyer's Firebase
-   ID token rides along in a hidden field, because a Server Action runs on the
-   server where the session in this tab does not exist.
-2. The action calls `placeOrder` on the API. The API prices the basket from its
-   own catalogue, writes the order, and opens the monobank invoice.
-3. It answers with a redirect to monobank's payment page. Because that is a
-   real form submission answered with a 303, checkout works with JavaScript
-   disabled. `redirect` is called outside the `try` block: it works by
-   throwing, so a catch around it would turn a successful checkout into an
-   error message.
-4. monobank returns the buyer to `NEXT_PUBLIC_SITE_URL/orders?order=<number>`,
-   whether they paid or not, and `/orders` forwards them to that order's own
-   page. The payment itself is confirmed by the webhook the API receives —
-   arriving at this URL proves nothing.
+1. `PayButton` on the landing page is a link to `/checkout?product=…`.
+2. `/checkout` asks for a sign-in, then for the delivery details. Both are
+   required: an order we cannot deliver, or whose customer we cannot reach, is
+   money we have to give back. The account is not friction checkout invents —
+   a Tsutsyk is unusable without one — so this only moves a step the buyer
+   takes anyway to where it also settles the address.
+3. The form posts to the `startCheckout` Server Action, carrying a product id,
+   a quantity, the delivery details and the buyer's Firebase ID token — never
+   an amount. The token travels in a hidden field because a Server Action runs
+   on the server, where the Firebase session in the tab does not exist.
+4. The action calls `placeOrder` on the API and answers with a redirect to
+   monobank's payment page. `redirect` is called outside the `try` block: it
+   works by throwing, so a catch around it would turn a successful checkout
+   into an error message.
+5. monobank returns the buyer to `NEXT_PUBLIC_SITE_URL/orders?order=<number>`,
+   whether they paid or not, and `/orders` forwards them to that order's page.
+   The payment itself is confirmed by the webhook the API receives — arriving
+   at this URL proves nothing.
+
+Checkout needs JavaScript, since signing in does. The rest of the form is
+ordinary `FormData` posted to a Server Action, so there is no client-side state
+to lose.
 
 ### Following an order
 
@@ -55,22 +59,16 @@ status, what was paid, the delivery details, and everything that has happened
 to it. Both live outside the `(private)` layout on purpose — that one gates on
 owning a Tsutsyk, and somebody who has just pre-ordered one owns nothing yet.
 
-An order placed while signed in is already attached to the account. One placed
-as a guest is claimed on that page, with its number — a button, not something
-that happens quietly on sign-in, since the number arrives from a URL and the
-account it binds to is the customer's to choose.
-
 From there they can pay an invoice that is still open, ask monobank for a new
-one after the old expired, re-check the payment, fill in or correct the
-delivery details, and cancel (refunded through monobank if it was paid). The
-page also subscribes to `orderUpdates`, so a payment confirming while they
-watch updates the page without a reload.
+one after the old expired, re-check the payment, correct the delivery details,
+and cancel (refunded through monobank if it was paid). The page also subscribes
+to `orderUpdates`, so a payment confirming while they watch updates the page
+without a reload.
 
-**Delivery** is asked for after payment: these are pre-orders assembled by
-hand over weeks, and a form standing between somebody and the pay button costs
-sales. The branch field in `delivery-form.tsx` is a plain text input for now —
-that is where the Nova Poshta branch picker goes, and the API only checks that
-a branch is filled in, so swapping it is a change in that one component.
+**The branch field** in `app/_components/delivery-fields/` is a plain text
+input for now — that is where the Nova Poshta branch picker goes. It is one
+component shared by checkout and the order page, and the API only checks that a
+branch is filled in, so swapping it is a change in that one file.
 
 ### Files
 
@@ -80,10 +78,10 @@ a branch is filled in, so swapping it is a change in that one component.
 | `app/_lib/catalogue.ts` | The catalogue, read from the API |
 | `app/_lib/useOrders.ts` | Order queries, mutations and the live-status subscription |
 | `app/_actions/checkout.ts` | `startCheckout` Server Action |
-| `app/_components/pay-button/` | The button |
+| `app/checkout/`, `app/_components/checkout/` | Sign-in, delivery details, pay |
+| `app/_components/delivery-fields/` | The delivery fields, shared by checkout and the order page |
 | `app/orders/`, `app/_components/orders/` | The customer's orders |
 | `app/orders/[id]/`, `app/_components/order/` | One order: status, payment, delivery, history |
-| `app/_components/order-notice/` | Catches an older return link on the landing page |
 
 ### Setup
 

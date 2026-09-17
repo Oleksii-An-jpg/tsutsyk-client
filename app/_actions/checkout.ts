@@ -8,6 +8,9 @@ import { ApiError, callApi } from "@/app/_lib/api";
 /** Non-null only when checkout failed — success leaves via a redirect. */
 export type CheckoutState = { error: string } | null;
 
+/** Where monobank sends the buyer once they are done, paid or not. */
+const RETURN_PATH = "/orders";
+
 const PLACE_ORDER = /* GraphQL */ `
     mutation PlaceOrder($input: PlaceOrderInput!) {
         placeOrder(input: $input) {
@@ -18,9 +21,6 @@ const PLACE_ORDER = /* GraphQL */ `
         }
     }
 `;
-
-/** Where monobank sends the buyer once they are done, paid or not. */
-const RETURN_PATH = "/orders";
 
 /**
  * Absolute origin of this deployment, for the URL monobank returns the buyer
@@ -42,21 +42,19 @@ async function resolveBaseUrl(): Promise<string> {
  * Places the order through the API and sends the buyer to monobank's payment
  * page.
  *
- * Takes `FormData` so the button can be a real form: submitted that way the
- * whole checkout works with JavaScript disabled, which a click handler calling
- * `window.location` cannot do.
- *
- * A Server Action is a public endpoint, so this trusts nothing from the caller
- * but a product id and a quantity — the API prices the order from its own
- * catalogue. The ID token, when the buyer is signed in, only ever widens what
- * the API does with the order: it attaches it to their account, so it shows up
- * under their orders without being claimed by hand.
+ * Takes `FormData` from the checkout form: a product id, a quantity, where the
+ * tracker should go, and the caller's Firebase ID token. The amount is never
+ * among them — the API prices the order from its own catalogue, so it cannot
+ * be edited on its way in. The checks here are for a decent error message; the
+ * API enforces the same rules whatever is posted to this endpoint.
  */
 export async function startCheckout(
     _previous: CheckoutState,
     formData: FormData
 ): Promise<CheckoutState> {
-    const productId = String(formData.get("productId") ?? "");
+    const text = (field: string) => String(formData.get(field) ?? "").trim();
+
+    const productId = text("productId");
     if (!productId) {
         return { error: "Такого товару немає." };
     }
@@ -66,7 +64,30 @@ export async function startCheckout(
         return { error: "Кількість має бути цілим числом, від 1." };
     }
 
-    const idToken = String(formData.get("idToken") ?? "") || null;
+    // Without a token the API refuses the order outright: every order has an
+    // owner. An empty one here means the session lapsed while the form was open.
+    const idToken = text("idToken");
+    if (!idToken) {
+        return { error: "Схоже, сесія завершилася. Увійдіть ще раз і спробуйте знову." };
+    }
+
+    const delivery = {
+        method: "NOVA_POSHTA_BRANCH",
+        recipientName: text("recipientName"),
+        phone: text("phone"),
+        city: text("city"),
+        branch: text("branch"),
+        comment: text("comment") || null,
+    };
+
+    if (
+        !delivery.recipientName ||
+        !delivery.phone ||
+        !delivery.city ||
+        !delivery.branch
+    ) {
+        return { error: "Заповніть дані доставки — без них ми не знаємо, куди везти." };
+    }
 
     let pageUrl: string;
 
@@ -80,6 +101,7 @@ export async function startCheckout(
             {
                 input: {
                     items: [{ productId, quantity }],
+                    delivery,
                     // The API appends ?order=<number>, so the buyer lands on
                     // their own order rather than back on the shop window.
                     redirectUrl: `${baseUrl}${RETURN_PATH}`,
