@@ -10,14 +10,8 @@ type AlertRegion {
   uid: Int!
 }
 
-"""
-A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
-"""
 scalar Date
 
-"""
-A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
-"""
 scalar DateTime
 
 input DeliveryInput {
@@ -49,11 +43,13 @@ type Location {
 type Mutation {
   cancelOrder(orderId: ID!, reason: String): Order!
   claimTsutsyk(id: ID!, name: String!, photoUrl: String): Tsutsyk!
+  deletePushSubscription(endpoint: String!): Boolean!
   endSession(sessionId: String!): Session!
   placeOrder(input: PlaceOrderInput!): OrderPayment!
   postLocation(battery: Int, lat: Float!, lng: Float!, sessionId: String!, tsutsykId: String!): Location!
   refreshOrderPayment(orderId: ID!): Order!
   retryOrderPayment(orderId: ID!, redirectUrl: String): OrderPayment!
+  savePushSubscription(input: PushSubscriptionInput!): Boolean!
   startSession(sessionId: String!, tsutsykId: String!): Session!
   updateOrderContact(input: OrderContactInput!, orderId: ID!): Order!
   updateOrderDelivery(input: DeliveryInput!, orderId: ID!): Order!
@@ -179,6 +175,16 @@ type Product {
   unit: String!
 }
 
+type PushConfig {
+  publicKey: String
+}
+
+input PushSubscriptionInput {
+  auth: String!
+  endpoint: String!
+  p256dh: String!
+}
+
 type Query {
   getActiveSession(tsutsykId: String!): Session
   getAlertRegions: [AlertRegion!]!
@@ -187,6 +193,7 @@ type Query {
   getOrder(id: ID!): Order
   getOrderTracking(id: ID!, phone: String!): OrderTracking
   getProducts: [Product!]!
+  getPushConfig: PushConfig!
   getSession(sessionId: String!): Session
   getTsutsyk(id: ID!): Tsutsyk
   getTsutsykHistory(sessionId: ID!): [Location!]!
