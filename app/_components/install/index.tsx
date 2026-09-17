@@ -9,7 +9,7 @@ const InstallPrompt: FC = () => {
 
     // Nothing to offer: already installed, a browser that will not install at
     // all, or one that has not yet said it would. Unlike the bell — which has
-    // a disabled state worth explaining — an install button that can never
+    // a disabled state worth explaining — an installation button that can never
     // install is a control with nothing behind it, so it is not rendered.
     if (phase === "checking" || phase === "installed" || phase === "unavailable") {
         return null;
