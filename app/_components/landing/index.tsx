@@ -249,6 +249,7 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
                     size="lg"
                     colorPalette="orange"
                     rounded="full"
+                    caption={null}
                 >
                     {price ? `Передзамовити за ${price} (тестується)` : "Передзамовити (тестується)"}
                 </PayButton>
