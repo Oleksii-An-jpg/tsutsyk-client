@@ -1,5 +1,6 @@
 import Landing from "@/app/_components/landing";
-import { formatPrice, getProduct } from "@/app/_lib/catalogue";
+import { getProduct } from "@/app/_lib/catalogue";
+import { formatPrice } from "@/app/_lib/format";
 
 const TRACKER_ID = "tsutsyk-tracker";
 

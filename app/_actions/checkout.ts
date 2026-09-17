@@ -19,6 +19,9 @@ const PLACE_ORDER = /* GraphQL */ `
     }
 `;
 
+/** Where monobank sends the buyer once they are done, paid or not. */
+const RETURN_PATH = "/orders";
+
 /**
  * Absolute origin of this deployment, for the URL monobank returns the buyer
  * to. Prefer the configured value; fall back to the incoming request so a
@@ -77,7 +80,9 @@ export async function startCheckout(
             {
                 input: {
                     items: [{ productId, quantity }],
-                    redirectUrl: baseUrl,
+                    // The API appends ?order=<number>, so the buyer lands on
+                    // their own order rather than back on the shop window.
+                    redirectUrl: `${baseUrl}${RETURN_PATH}`,
                 },
             },
             { idToken }

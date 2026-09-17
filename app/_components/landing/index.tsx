@@ -205,6 +205,9 @@ const NavBar: FC = () => (
                     >
                         Зроблено в Україні
                     </Text>
+                    <Button asChild size="sm" variant="ghost" rounded="full">
+                        <Link href="/orders">Замовлення</Link>
+                    </Button>
                     {/* One entry point for both cases: /auth forwards a ґазда
                         who is already signed in straight to their tracker. */}
                     <Button asChild size="sm" variant="outline" rounded="full">

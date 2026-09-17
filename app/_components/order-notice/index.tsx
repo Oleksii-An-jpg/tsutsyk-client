@@ -2,18 +2,17 @@
 
 import { FC } from "react";
 import { useSearchParams } from "next/navigation";
-import { Alert, Code, Text } from "@chakra-ui/react";
+import Link from "next/link";
+import { Alert, Button, Code, Stack } from "@chakra-ui/react";
 
 /**
  * The receipt line after monobank hands the buyer back.
  *
- * monobank returns everyone to the same address whether they paid or not, so
- * this says nothing about the payment — it shows the order number, which is
- * the one thing the buyer needs and would otherwise never see. With it they
- * can follow the order, and claim it against their account once they sign in.
- *
- * The payment itself is confirmed by the webhook, not by anybody arriving at
- * this URL.
+ * Checkout now returns buyers to /orders, so this only catches the ones that
+ * come back to the root — an invoice opened before that change, or a shared
+ * link. It says nothing about the payment: monobank returns everyone here
+ * whether they paid or not, and only the webhook the API receives settles
+ * that. Its job is to carry the buyer on to the order itself.
  */
 const OrderNotice: FC = () => {
     const orderId = useSearchParams().get("order");
@@ -28,11 +27,12 @@ const OrderNotice: FC = () => {
                     Дякуємо! Номер замовлення: <Code>{orderId}</Code>
                 </Alert.Title>
                 <Alert.Description>
-                    <Text>
-                        Збережіть його — за ним можна стежити за замовленням. Увійдіть
-                        тим самим номером телефону, і замовлення з’явиться у вашому
-                        кабінеті.
-                    </Text>
+                    <Stack align="start" gap="3">
+                        Збережіть його — за ним можна стежити за замовленням.
+                        <Button asChild size="sm" colorPalette="blue">
+                            <Link href={`/orders/${orderId}`}>Статус замовлення</Link>
+                        </Button>
+                    </Stack>
                 </Alert.Description>
             </Alert.Content>
         </Alert.Root>

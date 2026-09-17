@@ -61,12 +61,3 @@ export async function getProduct(id: string): Promise<Product | null> {
         return null;
     }
 }
-
-/** 490000 → "4 900 ₴". Narrow no-break spaces keep the price on one line. */
-export function formatPrice(kopiykas: number): string {
-    return new Intl.NumberFormat("uk-UA", {
-        style: "currency",
-        currency: "UAH",
-        maximumFractionDigits: kopiykas % 100 === 0 ? 0 : 2,
-    }).format(kopiykas / 100);
-}

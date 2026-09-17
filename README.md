@@ -43,25 +43,47 @@ this deployment and there is one place that knows what an order costs.
    disabled. `redirect` is called outside the `try` block: it works by
    throwing, so a catch around it would turn a successful checkout into an
    error message.
-4. monobank returns the buyer to `NEXT_PUBLIC_SITE_URL/?order=<number>`,
-   whether they paid or not, and `OrderNotice` shows them that number. The
-   payment itself is confirmed by the webhook the API receives — arriving at
-   this URL proves nothing.
+4. monobank returns the buyer to `NEXT_PUBLIC_SITE_URL/orders?order=<number>`,
+   whether they paid or not, and `/orders` forwards them to that order's own
+   page. The payment itself is confirmed by the webhook the API receives —
+   arriving at this URL proves nothing.
+
+### Following an order
+
+`/orders` lists what the customer has bought; `/orders/<number>` is one order:
+status, what was paid, the delivery details, and everything that has happened
+to it. Both live outside the `(private)` layout on purpose — that one gates on
+owning a Tsutsyk, and somebody who has just pre-ordered one owns nothing yet.
 
 An order placed while signed in is already attached to the account. One placed
-as a guest is claimed afterwards with its number, through the API's
-`claimOrder`. Either way the customer manages it — delivery details, tracking,
-retrying a payment, cancelling — through the API; see its README.
+as a guest is claimed on that page, with its number — a button, not something
+that happens quietly on sign-in, since the number arrives from a URL and the
+account it binds to is the customer's to choose.
+
+From there they can pay an invoice that is still open, ask monobank for a new
+one after the old expired, re-check the payment, fill in or correct the
+delivery details, and cancel (refunded through monobank if it was paid). The
+page also subscribes to `orderUpdates`, so a payment confirming while they
+watch updates the page without a reload.
+
+**Delivery** is asked for after payment: these are pre-orders assembled by
+hand over weeks, and a form standing between somebody and the pay button costs
+sales. The branch field in `delivery-form.tsx` is a plain text input for now —
+that is where the Nova Poshta branch picker goes, and the API only checks that
+a branch is filled in, so swapping it is a change in that one component.
 
 ### Files
 
 | Path | Role |
 | --- | --- |
 | `app/_lib/api.ts` | Server-side GraphQL calls to tsutsyk-api |
-| `app/_lib/catalogue.ts` | The catalogue, read from the API, and price formatting |
+| `app/_lib/catalogue.ts` | The catalogue, read from the API |
+| `app/_lib/useOrders.ts` | Order queries, mutations and the live-status subscription |
 | `app/_actions/checkout.ts` | `startCheckout` Server Action |
 | `app/_components/pay-button/` | The button |
-| `app/_components/order-notice/` | The order number, after monobank hands the buyer back |
+| `app/orders/`, `app/_components/orders/` | The customer's orders |
+| `app/orders/[id]/`, `app/_components/order/` | One order: status, payment, delivery, history |
+| `app/_components/order-notice/` | Catches an older return link on the landing page |
 
 ### Setup
 
