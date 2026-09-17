@@ -8,6 +8,23 @@ A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `dat
 """
 scalar DateTime
 
+input DeliveryInput {
+  address: String
+  branch: String
+  city: String
+  comment: String
+  method: DeliveryMethod!
+  phone: String!
+  recipientName: String!
+}
+
+enum DeliveryMethod {
+  NOVA_POSHTA_BRANCH
+  NOVA_POSHTA_COURIER
+  PICKUP
+  UKRPOSHTA
+}
+
 type Location {
   battery: Float
   id: ID!
@@ -18,16 +35,145 @@ type Location {
 }
 
 type Mutation {
+  cancelOrder(orderId: ID!, reason: String): Order!
   claimTsutsyk(id: ID!, name: String!, photoUrl: String): Tsutsyk!
   endSession(sessionId: String!): Session!
+  placeOrder(input: PlaceOrderInput!): OrderPayment!
   postLocation(battery: Int, lat: Float!, lng: Float!, sessionId: String!, tsutsykId: String!): Location!
+  refreshOrderPayment(orderId: ID!): Order!
+  retryOrderPayment(orderId: ID!, redirectUrl: String): OrderPayment!
   startSession(sessionId: String!, tsutsykId: String!): Session!
+  updateOrderContact(input: OrderContactInput!, orderId: ID!): Order!
+  updateOrderDelivery(input: DeliveryInput!, orderId: ID!): Order!
   updateTsutsyk(alertDistanceMeters: Int, id: ID!, photoUrl: String): Tsutsyk!
+}
+
+type Order {
+  amount: Int!
+  cancelReason: String
+  cancellable: Boolean!
+  contactEmail: String
+  contactPhone: String
+  createdAt: DateTime!
+  currency: Int!
+  delivery: OrderDelivery
+  editable: Boolean!
+  events: [OrderEvent!]!
+  failureReason: String
+  id: ID!
+  invoiceId: String
+  items: [OrderItem!]!
+  paidAt: DateTime
+  payable: Boolean!
+  paymentPageUrl: String
+  paymentStatus: PaymentStatus
+  status: OrderStatus!
+  trackingNumber: String
+  tsutsykIds: [String!]!
+  updatedAt: DateTime!
+}
+
+enum OrderActor {
+  CUSTOMER
+  MONOBANK
+  SYSTEM
+}
+
+input OrderContactInput {
+  email: String
+  phone: String!
+}
+
+type OrderDelivery {
+  address: String
+  branch: String
+  city: String
+  comment: String
+  method: DeliveryMethod!
+  phone: String!
+  recipientName: String!
+}
+
+type OrderEvent {
+  actor: OrderActor!
+  at: DateTime!
+  note: String
+  status: OrderStatus!
+}
+
+type OrderItem {
+  image: String
+  name: String!
+  productId: String!
+  quantity: Int!
+  sum: Int!
+  unit: String!
+  unitPrice: Int!
+}
+
+input OrderLineInput {
+  productId: String!
+  quantity: Int!
+}
+
+type OrderPayment {
+  invoiceId: String!
+  order: Order!
+  pageUrl: String!
+}
+
+enum OrderStatus {
+  CANCELLED
+  DELIVERED
+  IN_ASSEMBLY
+  PAID
+  PENDING_PAYMENT
+  REFUNDED
+  SHIPPED
+}
+
+type OrderTracking {
+  id: ID!
+  paymentStatus: PaymentStatus
+  status: OrderStatus!
+  trackingNumber: String
+  updatedAt: DateTime!
+}
+
+enum PaymentStatus {
+  CREATED
+  EXPIRED
+  FAILURE
+  HOLD
+  PROCESSING
+  REVERSED
+  SUCCESS
+}
+
+input PlaceOrderInput {
+  contact: OrderContactInput
+  delivery: DeliveryInput!
+  items: [OrderLineInput!]!
+  redirectUrl: String
+}
+
+type Product {
+  description: String!
+  id: ID!
+  image: String!
+  maxQuantity: Int!
+  name: String!
+  price: Int!
+  unit: String!
 }
 
 type Query {
   getActiveSession(tsutsykId: String!): Session
+  getMyOrders: [Order!]!
   getMyTsutsyks: [Tsutsyk!]!
+  getOrder(id: ID!): Order
+  getOrderTracking(id: ID!, phone: String!): OrderTracking
+  getProducts: [Product!]!
   getSession(sessionId: String!): Session
   getTsutsyk(id: ID!): Tsutsyk
   getTsutsykHistory(sessionId: ID!): [Location!]!
@@ -52,6 +198,7 @@ enum SessionStatus {
 
 type Subscription {
   locationUpdates(sessionId: ID!): Location!
+  orderUpdates(orderId: ID!): OrderTracking!
 }
 
 type Tsutsyk {
