@@ -33,18 +33,6 @@ import {
     type OperationVariables,
 } from "@apollo/client";
 
-const ENDPOINT = resolveEndpoint();
-
-function resolveEndpoint(): string {
-    const configured =
-        process.env.API_GRAPHQL_URL ?? process.env.NEXT_PUBLIC_GRAPHQL_HTTP_URL;
-
-    // The browser can live with "/graphql"; the server cannot, and a relative
-    // URL here fails at request time with a far less obvious message.
-    if (configured?.startsWith("http")) return configured;
-    return "";
-}
-
 let client: ApolloClient | undefined;
 
 /**
@@ -53,14 +41,14 @@ let client: ApolloClient | undefined;
  * is being imported.
  */
 export function getServerClient(): ApolloClient {
-    if (!ENDPOINT) {
+    if (!process.env.NEXT_PUBLIC_GRAPHQL_HTTP_URL) {
         throw new Error(
-            "API_GRAPHQL_URL is not set to an absolute URL — see .env.example"
+            "NEXT_PUBLIC_GRAPHQL_HTTP_URL is not set to an absolute URL — see .env.example"
         );
     }
 
     return (client ??= new ApolloClient({
-        link: new HttpLink({uri: ENDPOINT}),
+        link: new HttpLink({uri: process.env.NEXT_PUBLIC_GRAPHQL_HTTP_URL}),
         cache: new InMemoryCache(),
         defaultOptions: {
             query: {fetchPolicy: "no-cache"},
