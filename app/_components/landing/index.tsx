@@ -35,8 +35,13 @@ const CONTENT_WIDTH = "3xl";
 
 export type LandingProps = {
     productId: string;
-    /** Formatted on the server — the price catalogue never reaches the browser. */
-    price: string;
+    /**
+     * Formatted on the server — the price catalogue never reaches the browser.
+     * Null when the API could not be reached: better an unpriced shop window
+     * than an error page, and monobank quotes the price again before anyone
+     * pays.
+     */
+    price: string | null;
 };
 
 const FEATURES = [
@@ -199,6 +204,9 @@ const NavBar: FC = () => (
                     >
                         Зроблено в Україні
                     </Text>
+                    <Button asChild size="sm" variant="ghost" rounded="full">
+                        <Link href="/orders">Замовлення</Link>
+                    </Button>
                     {/* One entry point for both cases: /auth forwards a ґазда
                         who is already signed in straight to their tracker. */}
                     <Button asChild size="sm" variant="outline" rounded="full">
@@ -242,7 +250,7 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
                     colorPalette="orange"
                     rounded="full"
                 >
-                    Передзамовити за {price} (тестується)
+                    {price ? `Передзамовити за ${price} (тестується)` : "Передзамовити (тестується)"}
                 </PayButton>
             </Box>
 

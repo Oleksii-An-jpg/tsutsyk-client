@@ -1,10 +1,9 @@
 'use client';
 
-import { FC, useActionState } from "react";
+import { FC } from "react";
 import { Button, type ButtonProps, Text, VStack } from "@chakra-ui/react";
 import { LuArrowRight } from "react-icons/lu";
-
-import { startCheckout } from "@/app/_actions/checkout";
+import Link from "next/link";
 
 type PayButtonProps = Omit<ButtonProps, "onClick" | "loading" | "type"> & {
     productId: string;
@@ -15,13 +14,13 @@ type PayButtonProps = Omit<ButtonProps, "onClick" | "loading" | "type"> & {
 };
 
 /**
- * Starts a monobank checkout.
+ * Sends the buyer to checkout.
  *
- * A real form posting to a Server Action, rather than a click handler: the
- * action answers with a redirect to monobank's payment page, so the whole
- * purchase still works with JavaScript disabled. The amount never travels from
- * here — only a product id and a quantity — so the price cannot be tampered
- * with in devtools.
+ * It used to post straight to a Server Action that opened the invoice, which
+ * made for a fine one-click purchase and an order we could not deliver: the
+ * address, and the account that owns the order, are both collected on
+ * /checkout now. This is a link, so it is still a real navigation rather than
+ * something that only works once JavaScript has loaded.
  */
 const PayButton: FC<PayButtonProps> = ({
     productId,
@@ -29,39 +28,21 @@ const PayButton: FC<PayButtonProps> = ({
     children,
     caption = "Картка, Apple Pay, Google Pay або monobank",
     ...buttonProps
-}) => {
-    const [state, formAction, pending] = useActionState(startCheckout, null);
+}) => (
+    <VStack align="start" gap="2">
+        <Button asChild {...buttonProps}>
+            <Link href={`/checkout?product=${productId}&quantity=${quantity}`}>
+                {children}
+                <LuArrowRight />
+            </Link>
+        </Button>
 
-    return (
-        <form action={formAction}>
-            <VStack align="start" gap="2">
-                <input type="hidden" name="productId" value={productId} />
-                <input type="hidden" name="quantity" value={quantity} />
-
-                <Button
-                    type="submit"
-                    loading={pending}
-                    loadingText="Готуємо оплату…"
-                    {...buttonProps}
-                >
-                    {children}
-                    <LuArrowRight />
-                </Button>
-
-                {state?.error ? (
-                    <Text fontSize="sm" color="red.fg" role="alert">
-                        {state.error}
-                    </Text>
-                ) : (
-                    caption && (
-                        <Text fontSize="xs" color="fg.muted">
-                            {caption}
-                        </Text>
-                    )
-                )}
-            </VStack>
-        </form>
-    );
-};
+        {caption && (
+            <Text fontSize="xs" color="fg.muted">
+                {caption}
+            </Text>
+        )}
+    </VStack>
+);
 
 export default PayButton;
