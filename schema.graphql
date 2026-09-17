@@ -1,3 +1,15 @@
+enum AirRaidStatus {
+  ACTIVE
+  NO_ALERT
+  PARTLY
+  UNKNOWN
+}
+
+type AlertRegion {
+  title: String!
+  uid: Int!
+}
+
 """
 A date string, such as 2007-12-03, compliant with the `full-date` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
 """
@@ -45,7 +57,7 @@ type Mutation {
   startSession(sessionId: String!, tsutsykId: String!): Session!
   updateOrderContact(input: OrderContactInput!, orderId: ID!): Order!
   updateOrderDelivery(input: DeliveryInput!, orderId: ID!): Order!
-  updateTsutsyk(alertDistanceMeters: Int, id: ID!, photoUrl: String): Tsutsyk!
+  updateTsutsyk(alertDistanceMeters: Int, alertRegionUid: Int, id: ID!, photoUrl: String): Tsutsyk!
 }
 
 type Order {
@@ -169,6 +181,7 @@ type Product {
 
 type Query {
   getActiveSession(tsutsykId: String!): Session
+  getAlertRegions: [AlertRegion!]!
   getMyOrders: [Order!]!
   getMyTsutsyks: [Tsutsyk!]!
   getOrder(id: ID!): Order
@@ -202,7 +215,9 @@ type Subscription {
 }
 
 type Tsutsyk {
+  airRaidStatus: AirRaidStatus!
   alertDistanceMeters: Int!
+  alertRegion: AlertRegion
   claimed: Boolean!
   id: ID!
   name: String
