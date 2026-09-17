@@ -14,6 +14,7 @@ import {
     Heading,
     Icon,
     SimpleGrid,
+    Skeleton,
     Status,
     Text,
     Timeline,
@@ -28,8 +29,11 @@ import {
     LuSiren,
 } from "react-icons/lu";
 import Link from "next/link";
+import {useReactiveVar} from "@apollo/client/react";
 import {ColorModeButton} from "@/components/ui/color-mode";
 import PayButton from "@/app/_components/pay-button";
+import {authSettled, me} from "@/app/_lib/me";
+import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
 
 const CONTENT_WIDTH = "3xl";
 
@@ -179,6 +183,37 @@ const WAYPOINTS: Waypoint[] = [
     },
 ];
 
+// The landing sits outside /(private), so nothing else here subscribes to
+// Firebase — without this the nav would only ever see a signed-out `me`.
+const AccountButton: FC = () => {
+    useAdminAuth();
+
+    const self = useReactiveVar(me);
+
+    // Until getMyTsutsyks answers we cannot tell an owner from a stranger, and
+    // guessing means the button silently changes where it goes under a finger
+    // already on its way down.
+    if (!authSettled(self)) {
+        return <Skeleton height="8" width="24" rounded="full" />;
+    }
+
+    if (self.authorised) {
+        return (
+            <Button asChild size="sm" variant="outline" rounded="full">
+                <Link href="/me">Мій цуцик</Link>
+            </Button>
+        );
+    }
+
+    // An account without a device is not a failed login: /auth hands it the
+    // claim form rather than a password field, so the label promises that.
+    return (
+        <Button asChild size="sm" variant="outline" rounded="full">
+            <Link href="/auth">{self.authenticated ? "Прив'язати цуцика" : "Увійти"}</Link>
+        </Button>
+    );
+};
+
 const NavBar: FC = () => (
     <Box
         as="nav"
@@ -207,11 +242,7 @@ const NavBar: FC = () => (
                     <Button asChild size="sm" variant="ghost" rounded="full">
                         <Link href="/orders">Замовлення</Link>
                     </Button>
-                    {/* One entry point for both cases: /auth forwards a ґазда
-                        who is already signed in straight to their tracker. */}
-                    <Button asChild size="sm" variant="outline" rounded="full">
-                        <Link href="/auth">Увійти</Link>
-                    </Button>
+                    <AccountButton />
                     <ColorModeButton />
                 </HStack>
             </HStack>
