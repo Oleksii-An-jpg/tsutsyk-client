@@ -57,10 +57,7 @@ const FEATURES = [
     {
         icon: LuBellRing,
         title: "Push-сповіщення",
-        // Honest scope: the geofence check runs in the open app, so the
-        // notification needs it open. Server-side push would fix that and is
-        // not built yet — until it is, this card says what actually happens.
-        desc: "Якщо пес відійде задалеко від вас, телефон одразу сповістить — поки застосунок відкритий.",
+        desc: "Якщо пес відійде задалеко від вас, телефон одразу сповістить вас про це.",
     },
     {
         icon: LuRadioTower,
