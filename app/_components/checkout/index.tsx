@@ -21,7 +21,7 @@ import {auth} from "@/app/_lib/firebase";
 import {me} from "@/app/_lib/me";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
 import {formatPrice, toLocalPhone} from "@/app/_lib/format";
-import {startCheckout} from "@/app/_actions/checkout";
+import {CheckoutInput, CheckoutState, startCheckout} from "@/app/_actions/checkout";
 import AuthCard from "@/app/_components/auth";
 import DeliveryFields, {DeliveryValues} from "@/app/_components/delivery-fields";
 
@@ -110,7 +110,13 @@ const CheckoutForm: FC<{
     quantity: number;
     phone?: string | null;
 }> = ({product, quantity, phone}) => {
-    const [state, formAction, pending] = useActionState(startCheckout, null);
+    // Both type arguments spelled out: useActionState's payload overload is
+    // otherwise inferred, and an editor that resolves a different React types
+    // copy can land on the `FormData` shape a <form action> would use.
+    const [state, formAction, pending] = useActionState<CheckoutState, CheckoutInput>(
+        startCheckout,
+        null,
+    );
 
     const {register, handleSubmit, formState: {errors}} = useForm<DeliveryValues>({
         // Quiet while typing, honest on the submit attempt, live as it is
