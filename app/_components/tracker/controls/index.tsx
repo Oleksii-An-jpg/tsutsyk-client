@@ -34,8 +34,8 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
 
     const { start } = useOnboardingTour();
 
-    // Only ever an offer: the hook itself decides whether this person is owed a
-    // tour, and takes it back down when the map goes away.
+    // Every arrival on the map gets the tour; the hook is what takes it back
+    // down again when the map goes away.
     useEffect(() => {
         start();
     }, [start]);

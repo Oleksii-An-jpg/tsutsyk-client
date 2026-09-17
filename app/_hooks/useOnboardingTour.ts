@@ -31,30 +31,6 @@ export const tsutsykTourSteps: TourStep[] = [
         description: "Швиденько повертає мапу туди, де знаходишся ти.",
     },
 ];
-
-// The tour is a greeting, not a feature: once it has been raised it stays down,
-// including after a reload or a trip through the back button. Kept in
-// localStorage because component state dies with the mount it lived on, and a
-// back navigation is exactly a fresh mount.
-const SEEN_STORAGE_KEY = "tsutsyk:onboarding-tour-seen";
-
-const hasSeenTour = () => {
-    try {
-        return window.localStorage.getItem(SEEN_STORAGE_KEY) === "1";
-    } catch {
-        // Private mode and locked-down storage throw on access. Nothing to
-        // remember with, so the tour simply behaves as it did before.
-        return false;
-    }
-};
-
-const rememberTour = () => {
-    try {
-        window.localStorage.setItem(SEEN_STORAGE_KEY, "1");
-    } catch {
-        // See above — not remembering is survivable, failing to start is not.
-    }
-};
 // ---------------------------------------------------------------------------
 
 export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
@@ -63,6 +39,9 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
     // a teardown that happens while the chunk is still loading is still seen by
     // the code that resolves after it.
     const activeRef = useRef(false);
+    // Whether this mount has raised a tour at all — the only thing a bfcache
+    // restore can go on, since nothing remounts to ask for one.
+    const raisedRef = useRef(false);
 
     const stop = useCallback(() => {
         activeRef.current = false;
@@ -72,15 +51,13 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
     }, []);
 
     const start = useCallback(async () => {
-        // A tour already running, or one this person has already been walked
-        // through: either way there is nothing to raise.
-        if (activeRef.current || hasSeenTour()) return;
+        // Nothing is remembered between mounts: the tour greets every arrival on
+        // the map, and the only tour it won't raise is a second one on top of
+        // the one already up.
+        if (activeRef.current) return;
 
         activeRef.current = true;
-        // Marked as seen at the start rather than at the end: someone who walks
-        // away mid-tour has still been shown it, and leaving the mark until the
-        // last step is what let the back button replay it.
-        rememberTour();
+        raisedRef.current = true;
 
         // driver.js touches `document`, so it must be imported client-side only
         const { driver } = await import("driver.js");
@@ -139,12 +116,22 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
         // the cleanup below never runs and this is the only signal there is.
         window.addEventListener("popstate", handleNavigation);
 
+        // The other half of that bfcache trip: the page comes back exactly as
+        // it was frozen, minus the tour taken down on the way out, and React
+        // remounts nothing — so this is the only chance to greet someone
+        // walking back onto the map.
+        const handleRestore = (event: PageTransitionEvent) => {
+            if (event.persisted && raisedRef.current) void start();
+        };
+        window.addEventListener("pageshow", handleRestore);
+
         return () => {
             window.removeEventListener("pagehide", handleNavigation);
             window.removeEventListener("popstate", handleNavigation);
+            window.removeEventListener("pageshow", handleRestore);
             stop();
         };
-    }, [stop]);
+    }, [start, stop]);
 
     return { start, stop };
 }
