@@ -6,7 +6,6 @@ import {ringCss, MARKER_STATUS_COLOR_PALETTE, MarkerStatus} from "@/app/_compone
 import {BiSolidBatteryCharging} from "react-icons/bi";
 import {useReactiveVar} from "@apollo/client/react";
 import {me} from "@/app/_lib/me";
-import {sendNotification} from "@/app/actions";
 import {computeMovement} from "@/app/_lib/geo";
 
 type TsutsykProps = {
@@ -70,15 +69,18 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, name, p
         return () => clearInterval(id);
     }, []);
 
-    const shouldNotify = useMemo(() => {
-        return isLive && location && position && alertDistanceMeters != null && distanceFromLocation(location, position) > alertDistanceMeters
+    // Purely what the marker looks like. It used to also fire a push, which
+    // could only ever reach somebody already looking at this map — the
+    // component has to be mounted for the memo to run at all — and, because
+    // the sender kept one subscription for the whole deployment, could reach
+    // the wrong person entirely. Notifications come from the API now.
+    //
+    // This stays client-side because its other half does: `position` is the
+    // ґазда's own browser, which the API cannot see. Moving the leash to the
+    // server means anchoring it to a place instead of to a person.
+    const isTooFar = useMemo(() => {
+        return Boolean(isLive && location && position && alertDistanceMeters != null && distanceFromLocation(location, position) > alertDistanceMeters)
     }, [alertDistanceMeters, isLive, location, position])
-
-    useEffect(() => {
-        if (shouldNotify) {
-            sendNotification('Ой-ой! 🐶 Цуцик забіг задалеко 🐾').finally(console.log)
-        }
-    }, [shouldNotify]);
 
     const movement = useMemo(() => {
         return previousLocation ? computeMovement(previousLocation, location) : null;
@@ -87,7 +89,7 @@ const Tsutsyk: FC<TsutsykProps> = ({ location, previousLocation, isLive, name, p
     const isMoving = (movement?.speedMetersPerSecond ?? 0) > MOVING_SPEED_THRESHOLD_MPS;
 
     const isLowBattery = isLive && location.battery != null && location.battery < LOW_BATTERY_PERCENT;
-    const status: MarkerStatus = shouldNotify || isLowBattery
+    const status: MarkerStatus = isTooFar || isLowBattery
         ? "alert"
         : isLive && isMoving ? "active" : "idle";
     const statusColorPalette = MARKER_STATUS_COLOR_PALETTE[status];

@@ -105,6 +105,56 @@ monobank cannot POST to `localhost`, so the **API** is the one that needs to be
 reachable from the internet; see its README for the tunnel. This app only needs
 to reach the API.
 
+## Notifications
+
+The bell in the tracker controls subscribes this browser to Web Push. The
+**API** sends them — see its README — and this app's only job is to get the
+browser's subscription into its hands.
+
+### Why the API sends
+
+Because the API is the thing that finds out. An air raid alert being raised
+and a battery going flat both happen whether or not anyone has this app open,
+and a page that is closed cannot notice either.
+
+This used to live here, in a server action holding `let subscription` — one
+slot for the whole deployment. It stored the last browser to subscribe, so
+with two customers the second one's phone got the first one's notifications;
+it was lost on every redeploy; and on more than one instance the subscribe and
+the send could land on different ones, where the variable was empty. The
+comment in that file said the subscription wanted a database. It has one now,
+in the API, keyed by the uid in the caller's verified token.
+
+### The keys
+
+There is no `NEXT_PUBLIC_VAPID_PUBLIC_KEY` here any more. The key is read from
+`getPushConfig`, because it is one half of the keypair the API signs sends
+with: a copy configured separately here could drift, and a mismatched key
+fails at the push service, per device, with nothing in anyone's logs. Without
+keys on the API the query answers null and the bell stays disabled.
+
+### What the service worker does
+
+`public/sw.js` shows the notification and handles the tap. It follows the
+`url` the API put in the payload rather than a hardcoded origin — which had
+been sending every notification on every deployment to production — and reuses
+an open tab instead of opening one per tap. Payloads carry a `tag`, so an
+all-clear replaces the alert it answers instead of stacking under it.
+
+### The alert distance is still a ring, not a notification
+
+`alertDistanceMeters` is evaluated in `app/_components/tracker/tsutsyk/`, in
+the browser, against the ґазда's own position — and only while the map is on
+screen, since an unmounted component computes nothing and a closed tab holds
+no subscription. It colours the marker red. It no longer sends anything: the
+push it used to fire could only reach somebody already looking at the map, and
+went to whichever browser had most recently subscribed.
+
+Making that a real notification means moving it into the API, and the API
+cannot see the ґазда's phone — so it means anchoring the leash to a place
+instead of a person. That is a product decision, not a port, and it is the
+obvious next thing.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
