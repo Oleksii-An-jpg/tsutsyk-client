@@ -3,7 +3,15 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { ApiError, callApi } from "@/app/_lib/api";
+import { CombinedGraphQLErrors, ServerError } from "@apollo/client/errors";
+
+import { MUTATION_PLACE_ORDER } from "@/app/_documents/MUTATION_PLACE_ORDER";
+import {
+    PlaceOrderMutation,
+    PlaceOrderMutationVariables,
+} from "@/app/_documents/__generated__/MUTATION_PLACE_ORDER.codegen";
+import { DeliveryMethod } from "@/app/_documents/__generated__/globalTypes.codegen";
+import { serverMutate } from "@/app/_lib/apollo-server";
 
 /** Non-null only when checkout failed — success leaves via a redirect. */
 export type CheckoutState = { error: string } | null;
@@ -24,17 +32,6 @@ export type CheckoutInput = {
 
 /** Where monobank sends the buyer once they are done, paid or not. */
 const RETURN_PATH = "/orders";
-
-const PLACE_ORDER = /* GraphQL */ `
-    mutation PlaceOrder($input: PlaceOrderInput!) {
-        placeOrder(input: $input) {
-            pageUrl
-            order {
-                id
-            }
-        }
-    }
-`;
 
 /**
  * Absolute origin of this deployment, for the URL monobank returns the buyer
@@ -83,7 +80,7 @@ export async function startCheckout(
 
     const text = (value?: string | null) => String(value ?? "").trim();
     const delivery = {
-        method: "NOVA_POSHTA_BRANCH",
+        method: DeliveryMethod.NovaPoshtaBranch,
         recipientName: text(input.delivery?.recipientName),
         phone: text(input.delivery?.phone),
         city: text(input.delivery?.city),
@@ -105,10 +102,11 @@ export async function startCheckout(
     try {
         const baseUrl = await resolveBaseUrl();
 
-        const { placeOrder } = await callApi<{
-            placeOrder: { pageUrl: string; order: { id: string } };
-        }>(
-            PLACE_ORDER,
+        const { placeOrder } = await serverMutate<
+            PlaceOrderMutation,
+            PlaceOrderMutationVariables
+        >(
+            MUTATION_PLACE_ORDER,
             {
                 input: {
                     items: [{ productId, quantity }],
@@ -128,11 +126,16 @@ export async function startCheckout(
         // something they can act on.
         console.error("[checkout] could not place the order", error);
 
+        // The API answering "no" — either as a GraphQL error or a failed
+        // request — is worth waiting out; anything else (a link that never
+        // got off the ground) is worth trying again right away.
+        const answered =
+            CombinedGraphQLErrors.is(error) || ServerError.is(error);
+
         return {
-            error:
-                error instanceof ApiError
-                    ? "Не вдалося створити платіж. Спробуйте ще раз за хвилину."
-                    : "Не вдалося створити платіж. Спробуйте ще раз.",
+            error: answered
+                ? "Не вдалося створити платіж. Спробуйте ще раз за хвилину."
+                : "Не вдалося створити платіж. Спробуйте ще раз.",
         };
     }
 
