@@ -9,7 +9,6 @@ import {useEndSession} from "@/app/_lib/useTracker";
 import {SessionFragmentFragment} from "@/app/_documents/fragments/__generated__/SESSION_FRAGMENT.codegen";
 import type {userAgent} from "next/server";
 import PushNotificationManager from "@/app/_components/notification";
-import {useBoolean} from "usehooks-ts";
 import {useOnboardingTour} from "@/app/_hooks/useOnboardingTour";
 
 type ControlsProps = {
@@ -33,16 +32,13 @@ const Controls: FC<ControlsProps> = ({ location, session, userAgent }) => {
         }
     }, [mutate, session?.id]);
 
-    const { value, setTrue } = useBoolean(false);
-
     const { start } = useOnboardingTour();
 
+    // Every arrival on the map gets the tour; the hook is what takes it back
+    // down again when the map goes away.
     useEffect(() => {
-        if (!value) {
-            setTrue();
-            start();
-        }
-    }, [setTrue, start, value]);
+        start();
+    }, [start]);
 
     return <ButtonGroup orientation="vertical" size="sm" variant="solid">
         <PushNotificationManager />

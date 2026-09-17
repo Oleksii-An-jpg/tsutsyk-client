@@ -1,4 +1,7 @@
-import type { DriveStep } from "driver.js";
+'use client';
+
+import {useCallback, useEffect, useRef} from "react";
+import type { Driver, DriveStep } from "driver.js";
 
 export interface TourStep {
     target: string; // CSS selector, e.g. '[data-tour="geofence-panel"]'
@@ -31,10 +34,34 @@ export const tsutsykTourSteps: TourStep[] = [
 // ---------------------------------------------------------------------------
 
 export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
-    const start = async () => {
+    const driverRef = useRef<Driver | null>(null);
+    // Set the moment a tour is asked for, not when driver.js finally lands, so
+    // a teardown that happens while the chunk is still loading is still seen by
+    // the code that resolves after it.
+    const activeRef = useRef(false);
+
+    const stop = useCallback(() => {
+        activeRef.current = false;
+        const driverObj = driverRef.current;
+        driverRef.current = null;
+        driverObj?.destroy();
+    }, []);
+
+    const start = useCallback(async () => {
+        // Nothing is remembered between mounts: the tour greets every arrival on
+        // the map, and the only tour it won't raise is a second one on top of
+        // the one already up.
+        if (activeRef.current) return;
+
+        activeRef.current = true;
+
         // driver.js touches `document`, so it must be imported client-side only
         const { driver } = await import("driver.js");
         await import("driver.js/dist/driver.css");
+
+        // Stopped while those chunks were in flight — an unmount, or
+        // StrictMode's second mount arriving first.
+        if (!activeRef.current) return;
 
         const driveSteps: DriveStep[] = steps.map((step) => ({
             element: step.target,
@@ -57,10 +84,25 @@ export function useOnboardingTour(steps: TourStep[] = tsutsykTourSteps) {
             onDestroyStarted: () => {
                 driverObj.destroy();
             },
+            onDestroyed: () => {
+                // driver.js also tears itself down on Esc, on the overlay and
+                // on "Готово", so the refs are cleared here too — otherwise
+                // stop() would later destroy an instance that is already gone.
+                driverRef.current = null;
+                activeRef.current = false;
+            },
         });
 
+        driverRef.current = driverObj;
         driverObj.drive();
-    };
+    }, [steps]);
 
-    return { start };
+    // driver.js paints its overlay and popover straight onto document.body,
+    // outside React's tree, so React taking the buttons away does not take the
+    // tour with them. Every way off the map is a client-side navigation, which
+    // unmounts this hook along with those buttons — so the cleanup *is* the
+    // navigation subscription, and the overlay goes when they do.
+    useEffect(() => stop, [stop]);
+
+    return { start, stop };
 }
