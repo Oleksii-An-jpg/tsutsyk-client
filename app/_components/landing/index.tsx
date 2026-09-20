@@ -229,8 +229,8 @@ const NavBar: FC = () => (
     >
         <Container maxW={CONTENT_WIDTH} py="4">
             <HStack justify="space-between">
-                <Text fontWeight="bold" fontSize="lg">
-                    Цуц<Text as="span" color="orange.fg">ик</Text>
+                <Text fontWeight="bold" color="fg" fontSize="lg">
+                    Цуцик <Text as="span" color="orange.fg">Live</Text>
                 </Text>
                 <HStack gap="3">
                     <Text
@@ -254,7 +254,7 @@ const NavBar: FC = () => (
 );
 
 const Hero: FC<LandingProps> = ({productId, price}) => (
-    <Box as="header" pt={{base: 14, md: 20}} pb={{base: 10, md: 14}}>
+    <Box bg="bg" as="header" pt={{base: 14, md: 20}} pb={{base: 10, md: 14}}>
         <Container maxW={CONTENT_WIDTH}>
             <HStack colorPalette="orange" gap="2" mb="5">
                 <Box boxSize="1.5" rounded="full" bg="colorPalette.solid" />
@@ -263,7 +263,7 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
                 </Text>
             </HStack>
 
-            <Heading as="h1" size={{base: "3xl", md: "5xl"}} lineHeight="1.15" maxW="22ch" mb="6">
+            <Heading color="fg" as="h1" size={{base: "3xl", md: "5xl"}} lineHeight="1.15" maxW="22ch" mb="6">
                 Я завжди знаю, де мій пес.{" "}
                 <Text as="span" color="blue.fg">
                     Тепер знатимете й ви.
@@ -328,7 +328,7 @@ const Hero: FC<LandingProps> = ({productId, price}) => (
 );
 
 const Story: FC = () => (
-    <Box as="main" py={{base: 6, md: 10}}>
+    <Box bg="bg" as="main" py={{base: 6, md: 10}}>
         <Container maxW={CONTENT_WIDTH}>
             <Timeline.Root>
                 {WAYPOINTS.map((waypoint) => (
@@ -350,7 +350,7 @@ const Story: FC = () => (
                             >
                                 {waypoint.label}
                             </Text>
-                            <Heading as="h2" size="lg" mb="4">
+                            <Heading as="h2" color="fg" size="lg" mb="4">
                                 {waypoint.title}
                             </Heading>
                             {waypoint.body}
@@ -363,7 +363,7 @@ const Story: FC = () => (
 );
 
 const Closing: FC = () => (
-    <Box as="section" bg="bg.inverted" color="fg.inverted" py={{base: 16, md: 20}} mt="10">
+    <Box as="section" bg="bg.inverted" color="fg.inverted" py={{base: 16, md: 20}}>
         <Container maxW="2xl">
             <Heading as="h2" size={{base: "xl", md: "2xl"}} mb="4">
                 Хочете дізнатись, як просувається Цуцик?
@@ -382,9 +382,9 @@ const Closing: FC = () => (
 );
 
 const Footer: FC = () => (
-    <Box as="footer" py={{base: 8, md: 10}} textAlign="center">
+    <Box bg="bg" as="footer" py={{base: 8, md: 10}} textAlign="center">
         <Container maxW="2xl">
-            <Text fontSize="sm" color="fg.muted">
+            <Text fontSize="sm" color="fg">
                 Цуцик — особистий проєкт. Зроблено з любові до одного конкретного хасюка.
             </Text>
         </Container>
