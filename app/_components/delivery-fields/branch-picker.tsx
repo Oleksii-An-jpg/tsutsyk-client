@@ -48,7 +48,7 @@ type AsyncComboboxProps = {
     options: Option[];
     loading: boolean;
     disabled?: boolean;
-    invalid?: boolean;
+    /** The field's complaint, if the form has one and the field is live. */
     errorText?: string;
     /** The label currently chosen — the value the form holds. */
     value: string;
@@ -74,7 +74,6 @@ const AsyncCombobox: FC<AsyncComboboxProps> = ({
     options,
     loading,
     disabled,
-    invalid,
     errorText,
     value,
     onBlur,
@@ -82,6 +81,11 @@ const AsyncCombobox: FC<AsyncComboboxProps> = ({
     onPick,
 }) => {
     const inputId = useId();
+
+    // A field nobody can type in has no business turning red: what is missing
+    // from it is not what the buyer should fix next. The branch waits on a
+    // settlement, and its placeholder says so.
+    const showError = !!errorText && !disabled;
 
     // A value the order already had is a real choice even though no search
     // has turned it up: without an option to point at, the box would blank
@@ -104,7 +108,7 @@ const AsyncCombobox: FC<AsyncComboboxProps> = ({
     const selected = items.find((item) => item.label === value);
 
     return (
-        <Field.Root required invalid={invalid} disabled={disabled}>
+        <Field.Root required invalid={showError} disabled={disabled}>
             <Field.Label htmlFor={inputId}>{label}</Field.Label>
             <Combobox.Root
                 width="full"
@@ -112,7 +116,7 @@ const AsyncCombobox: FC<AsyncComboboxProps> = ({
                 ids={{input: inputId}}
                 value={selected ? [selected.value] : []}
                 disabled={disabled}
-                invalid={invalid}
+                invalid={showError}
                 openOnClick
                 inputBehavior="autohighlight"
                 onValueChange={(details) => onPick(details.items[0] ?? null)}
@@ -152,7 +156,7 @@ const AsyncCombobox: FC<AsyncComboboxProps> = ({
                     </Combobox.Positioner>
                 </Portal>
             </Combobox.Root>
-            {errorText ? (
+            {showError ? (
                 <Field.ErrorText>{errorText}</Field.ErrorText>
             ) : (
                 helperText && <Field.HelperText>{helperText}</Field.HelperText>
@@ -365,7 +369,6 @@ const BranchPicker: FC<BranchPickerProps> = ({control, disabled}) => {
                     options={settlementOptions}
                     loading={searchingSettlements}
                     disabled={disabled}
-                    invalid={!!cityState.error}
                     errorText={cityState.error?.message}
                     value={city.value}
                     onBlur={city.onBlur}
@@ -389,7 +392,6 @@ const BranchPicker: FC<BranchPickerProps> = ({control, disabled}) => {
                 // An order being corrected keeps the branch it already has,
                 // and stays editable while that settlement is looked back up.
                 disabled={disabled || (!settlementRef && !branch.value)}
-                invalid={!!branchState.error}
                 errorText={branchState.error?.message}
                 value={branch.value}
                 onBlur={branch.onBlur}
