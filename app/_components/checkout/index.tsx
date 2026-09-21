@@ -82,7 +82,7 @@ const Checkout: FC<CheckoutProps> = ({product, quantity}) => {
             <Container maxW="2xl" py={{base: 8, md: 16}}>
                 <Stack gap={6}>
                     <Stack gap={2}>
-                        <Heading size="xl">Оформлення</Heading>
+                        <Heading color="fg" size="xl">Оформлення</Heading>
                         <Text color="fg.muted">
                             Спершу увійдіть: акаунт потрібен, щоб користуватися трекером,
                             і саме в ньому ви стежитимете за замовленням.
@@ -149,7 +149,7 @@ const CheckoutForm: FC<{
     return (
         <Stack as="form" gap={6} onSubmit={onSubmit}>
             <Stack gap={2}>
-                <Heading size="xl">Оформлення</Heading>
+                <Heading color="fg" size="xl">Оформлення</Heading>
                 <Text color="fg.muted">
                     Пристрої збираються поштучно, тож це передзамовлення. Дані доставки
                     можна буде змінити, поки замовлення не поїхало.
