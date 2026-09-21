@@ -90,6 +90,52 @@ three read-only Server Actions the browser reaches it through, so
 request body: the directory changes a few times a year, and Nova Poshta rate-
 limits by key.
 
+### The panel
+
+`/admin` is the back office: every customer's orders, and the only place an
+order can be dispatched from. `/admin/orders/<number>` is one order laid out
+for the person packing it — the address first, with a button that puts it on
+the clipboard, because the alternative is retyping a Ukrainian name into Nova
+Poshta's cabinet by hand.
+
+The queue filters by status through `?status=`, so "everything waiting to be
+packed" is a link somebody can bookmark. `PAID` leads because it is the only
+queue that is a to-do list: money has arrived and nothing has been built yet.
+
+From an order, the panel can start the assembly (which freezes the address, so
+it cannot move between being read and being printed onto a waybill), record the
+waybill number — which is what sends the order to `SHIPPED`, and re-recording
+it is how a typo is corrected — close the order out as delivered, and call it
+off on the customer's behalf, refunded through monobank if it was paid.
+
+The waybill itself is created by hand in Nova Poshta's own cabinet. Nothing
+here talks to the carrier; this records the number so the customer can follow
+it, and their page is already watching `orderUpdates`, so it appears for them
+without a reload.
+
+#### Who gets in
+
+The `admin` custom claim on the Firebase token — the same one the API's own
+`AdminGuard` reads off the same token, granted over there with
+`npm run grant:admin`. It is deliberately not the `(private)` layout's gate:
+that one asks whether somebody owns a Tsutsyk, and whoever packs the parcels
+need not own one, while a ґазда who owns three is still not one of us.
+
+The layout's check is not the authorisation. Every query and mutation behind
+`/admin` is checked again server-side, and a browser that lied its way past it
+would get `Not allowed` from all of them. What the check buys is that nobody is
+shown a console whose every button fails, and that the admin-only queries are
+never sent on behalf of someone they will be refused for. `me.admin` carries
+the claim, which is also what puts the **Панель** link in the landing nav —
+so the address is one fewer thing to remember, not a secret.
+
+The claim arrives with the token, so it needs no round-trip to establish —
+which is why the panel gates on `checked` rather than `authSettled`, the latter
+also waiting on `getMyTsutsyks` to answer a question the panel never asks. It
+also means a claim granted just now lands on the *next* token: an
+already-signed-in browser keeps its old one for up to an hour unless it signs
+out and back in.
+
 ### Files
 
 | Path | Role |
@@ -103,6 +149,10 @@ limits by key.
 | `app/_lib/novaposhta/`, `app/_actions/novaposhta.ts` | Nova Poshta's address directory, and the browser's way to it |
 | `app/orders/`, `app/_components/orders/` | The customer's orders |
 | `app/orders/[id]/`, `app/_components/order/` | One order: status, payment, delivery, history |
+| `app/_lib/useAdminOrders.ts` | The same, for anybody's order — behind the `admin` claim |
+| `app/admin/`, `app/_components/admin/orders/` | The queue, filtered by status |
+| `app/admin/orders/[id]/`, `app/_components/admin/order/` | One order, and the buttons that dispatch it |
+| `app/_hooks/useAdminAuth.ts` | Firebase auth into `me`, the `admin` claim included |
 
 ### Setup
 

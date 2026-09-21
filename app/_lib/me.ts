@@ -8,6 +8,19 @@ export type Me = {
     user: User | null;
     tsutsykIds: string[];
     authorised: boolean;
+    /**
+     * Whether the caller carries the `admin` custom claim — the one the API's
+     * own `AdminGuard` checks, minted by `npm run grant:admin` over there.
+     *
+     * Kept apart from `authorised`, which answers a different question: that
+     * one is "may this person use the tracker", and a ґазда who owns a Tsutsyk
+     * is authorised without being one of us. Only this opens /admin.
+     *
+     * It is not the authorisation either way — the API re-checks the claim on
+     * the token of every call. This is what stops us showing somebody a back
+     * office whose every button would answer "Not allowed".
+     */
+    admin: boolean;
     authenticated: boolean;
     checked: boolean;
     tsutsyksChecked: boolean;
@@ -16,6 +29,7 @@ export type Me = {
 export const me = makeLove<Me>({
     user: null,
     tsutsykIds: [],
+    admin: false,
     geolocationAvailable: false,
     authorised: false,
     checked: false,
