@@ -16,7 +16,7 @@ interface AdminAuthState {
 export function useAdminAuth(): AdminAuthState {
     const [user, setUser] = useState<User | null>(null);
     const [hasAdminRole, setHasAdminRole] = useState(false);
-    const { value: isAdmin, setTrue, setFalse, setValue } = useBoolean(false);
+    const { value: isAdmin, setFalse, setValue } = useBoolean(false);
     const router = useRouter();
 
     // A Tsutsyk can be granted access either via the admin-managed
@@ -32,12 +32,17 @@ export function useAdminAuth(): AdminAuthState {
             if (firebaseUser) {
                 try {
                     const idTokenResult = await firebaseUser.getIdTokenResult();
-                    const isUserAdmin = idTokenResult.claims.role === 'admin';
-                    setTrue();
+                    // `admin`, strictly true: the same claim the API's own
+                    // AdminGuard reads off the same token, minted over there
+                    // by `npm run grant:admin`. A custom claim is arbitrary
+                    // JSON, so a truthy string is not somebody being an admin.
+                    const isUserAdmin = idTokenResult.claims.admin === true;
+                    setValue(isUserAdmin);
                     setHasAdminRole(isUserAdmin);
                     me({
                         ...me(),
                         user: firebaseUser,
+                        admin: isUserAdmin,
                         authorised: isUserAdmin,
                         checked: true,
                         authenticated: true,
@@ -47,8 +52,11 @@ export function useAdminAuth(): AdminAuthState {
                     });
                 } catch (error) {
                     console.error('Error checking admin role:', error);
+                    setFalse();
+                    setHasAdminRole(false);
                     me({
                         ...me(),
+                        admin: false,
                         authorised: false,
                         checked: true,
                         authenticated: false,
@@ -62,6 +70,7 @@ export function useAdminAuth(): AdminAuthState {
                     ...me(),
                     user: null,
                     tsutsykIds: [],
+                    admin: false,
                     authorised: false,
                     checked: true,
                     authenticated: false,
@@ -71,7 +80,7 @@ export function useAdminAuth(): AdminAuthState {
         });
 
         return () => unsubscribe();
-    }, [router, setValue, setFalse, setTrue]);
+    }, [router, setValue, setFalse]);
 
     // Re-merge whenever the owned-Tsutsyk query resolves (or the claims
     // above change), so a freshly self-claimed device grants access without
@@ -83,6 +92,8 @@ export function useAdminAuth(): AdminAuthState {
         me({
             ...me(),
             tsutsykIds,
+            // Owning a Tsutsyk authorises the tracker; it does not make
+            // anybody one of us, so `admin` is left where the claim put it.
             authorised: hasAdminRole || tsutsykIds.length > 0,
             tsutsyksChecked: true,
         });

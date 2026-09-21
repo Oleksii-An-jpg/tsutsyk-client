@@ -186,11 +186,7 @@ const WAYPOINTS: Waypoint[] = [
     },
 ];
 
-// The landing sits outside /(private), so nothing else here subscribes to
-// Firebase — without this the nav would only ever see a signed-out `me`.
 const AccountButton: FC = () => {
-    useAdminAuth();
-
     const self = useReactiveVar(me);
 
     // Until getMyTsutsyks answers we cannot tell an owner from a stranger, and
@@ -217,7 +213,36 @@ const AccountButton: FC = () => {
     );
 };
 
-const NavBar: FC = () => (
+/**
+ * The way into the back office, for the people who have one.
+ *
+ * Shown off the `admin` claim, which arrives with the token — so unlike the
+ * account button beside it there is nothing to wait for, and nothing to show
+ * anybody else. /admin turns away a browser that guesses the address anyway,
+ * and the API turns away the queries behind it; this is only so that whoever
+ * packs the parcels does not have to remember a URL.
+ */
+const AdminButton: FC = () => {
+    const self = useReactiveVar(me);
+
+    if (!self.admin) return null;
+
+    return (
+        <Button asChild size="sm" variant="ghost" rounded="full" colorPalette="orange">
+            <Link href="/admin">Панель</Link>
+        </Button>
+    );
+};
+
+// The landing sits outside /(private), so nothing else here subscribes to
+// Firebase — without this the nav would only ever see a signed-out `me`. It
+// lives here rather than in either button because both read that `me`, and a
+// hook that one of them happened to call was a subscription the other quietly
+// depended on being rendered.
+const NavBar: FC = () => {
+    useAdminAuth();
+
+    return (
     <Box
         as="nav"
         position="sticky"
@@ -245,13 +270,15 @@ const NavBar: FC = () => (
                     <Button asChild size="sm" variant="ghost" rounded="full">
                         <Link href="/orders">Замовлення</Link>
                     </Button>
+                    <AdminButton />
                     <AccountButton />
                     <ColorModeButton />
                 </HStack>
             </HStack>
         </Container>
     </Box>
-);
+    );
+};
 
 const Hero: FC<LandingProps> = ({productId, price}) => (
     <Box bg="bg" as="header" pt={{base: 14, md: 20}} pb={{base: 10, md: 14}}>
