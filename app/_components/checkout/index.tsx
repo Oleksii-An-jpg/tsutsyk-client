@@ -118,7 +118,7 @@ const CheckoutForm: FC<{
         null,
     );
 
-    const {register, handleSubmit, formState: {errors}} = useForm<DeliveryValues>({
+    const {register, handleSubmit, control, formState: {errors}} = useForm<DeliveryValues>({
         // Quiet while typing, honest on the submit attempt, live as it is
         // corrected — the same bargain the sign-in form strikes.
         mode: 'onTouched',
@@ -175,7 +175,7 @@ const CheckoutForm: FC<{
                     <Heading size="md">Куди привезти</Heading>
                 </Card.Header>
                 <Card.Body>
-                    <DeliveryFields register={register} errors={errors} />
+                    <DeliveryFields register={register} errors={errors} control={control} />
                 </Card.Body>
             </Card.Root>
 
