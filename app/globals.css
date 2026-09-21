@@ -1,25 +1,31 @@
 @import "tailwindcss";
 
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
 @theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
 }
 
 html, body {
   overscroll-behavior: none;
 }
 
-/* No colours here on purpose.
- *
- * Chakra sets `html { color: fg; background: bg }`, and those tokens follow
- * the class next-themes puts on <html> — which is what the theme toggle
- * actually changes. The `--background`/`--foreground` pair create-next-app
- * leaves in this file follows `prefers-color-scheme` instead, and a rule on
- * `body` beats the one Chakra puts on `html`: on a light OS with the app in
- * dark mode that painted near-black text into a dark page, invisible
- * wherever a component inherits the colour rather than naming a token.
- */
 body {
+  background: var(--background);
+  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
