@@ -1,12 +1,14 @@
 'use client';
 
 import {FC} from "react";
-import {Field, Input, InputGroup, SimpleGrid, Stack} from "@chakra-ui/react";
+import {Field, Input, InputGroup, SimpleGrid, Stack, NativeSelect} from "@chakra-ui/react";
 import {FieldErrors, UseFormRegister} from "react-hook-form";
+import {Region} from "@/app/_lib/novaposhta/types";
 
 export type DeliveryValues = {
     recipientName: string;
     phone: string;
+    region: Region['ref'];
     city: string;
     branch: string;
     comment: string;
@@ -15,6 +17,7 @@ export type DeliveryValues = {
 type DeliveryFieldsProps = {
     register: UseFormRegister<DeliveryValues>;
     errors: FieldErrors<DeliveryValues>;
+    regions: Region[];
     disabled?: boolean;
 };
 
@@ -25,7 +28,7 @@ type DeliveryFieldsProps = {
  * be placed without them, and the order page, where they stay editable until
  * it ships. The form around them owns the values — this only knows how to ask.
  */
-const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, disabled}) => (
+const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, disabled, regions}) => (
     <Stack gap={4}>
         <SimpleGrid columns={{base: 1, sm: 2}} gap={4}>
             <Field.Root required invalid={!!errors.recipientName}>
@@ -61,6 +64,19 @@ const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, disabled}) =
                 </InputGroup>
                 <Field.ErrorText>{errors.phone?.message}</Field.ErrorText>
                 <Field.HelperText>За ним вас знайде кур&#39;єр</Field.HelperText>
+            </Field.Root>
+
+            <Field.Root required invalid={!!errors.region}>
+                <Field.Label>Область</Field.Label>
+                <NativeSelect.Root size="sm">
+                    <NativeSelect.Field {...register('region')} placeholder="Оберіть область">
+                        {regions.map(region => (
+                            <option key={region.ref} value={region.ref}>{region.description}</option>
+                        ))}
+                    </NativeSelect.Field>
+                    <NativeSelect.Indicator />
+                </NativeSelect.Root>
+                <Field.ErrorText>{errors.region?.message}</Field.ErrorText>
             </Field.Root>
 
             <Field.Root required invalid={!!errors.city}>
