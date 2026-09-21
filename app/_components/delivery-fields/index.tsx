@@ -1,23 +1,18 @@
 'use client';
 
 import {FC} from "react";
-import {Field, Input, InputGroup, SimpleGrid, Stack, NativeSelect} from "@chakra-ui/react";
-import {FieldErrors, UseFormRegister} from "react-hook-form";
-import {Region} from "@/app/_lib/novaposhta/types";
+import {Field, Input, InputGroup, SimpleGrid, Stack} from "@chakra-ui/react";
+import {Control, FieldErrors, UseFormRegister} from "react-hook-form";
+import BranchPicker from "@/app/_components/delivery-fields/branch-picker";
+import {DeliveryValues} from "@/app/_components/delivery-fields/types";
 
-export type DeliveryValues = {
-    recipientName: string;
-    phone: string;
-    region: Region['ref'];
-    city: string;
-    branch: string;
-    comment: string;
-};
+export type {DeliveryValues};
 
 type DeliveryFieldsProps = {
     register: UseFormRegister<DeliveryValues>;
     errors: FieldErrors<DeliveryValues>;
-    regions: Region[];
+    /** The picker writes `city` and `branch` itself, so it needs the form. */
+    control: Control<DeliveryValues>;
     disabled?: boolean;
 };
 
@@ -28,7 +23,7 @@ type DeliveryFieldsProps = {
  * be placed without them, and the order page, where they stay editable until
  * it ships. The form around them owns the values — this only knows how to ask.
  */
-const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, disabled, regions}) => (
+const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, control, disabled}) => (
     <Stack gap={4}>
         <SimpleGrid columns={{base: 1, sm: 2}} gap={4}>
             <Field.Root required invalid={!!errors.recipientName}>
@@ -65,48 +60,9 @@ const DeliveryFields: FC<DeliveryFieldsProps> = ({register, errors, disabled, re
                 <Field.ErrorText>{errors.phone?.message}</Field.ErrorText>
                 <Field.HelperText>За ним вас знайде кур&#39;єр</Field.HelperText>
             </Field.Root>
-
-            <Field.Root required invalid={!!errors.region}>
-                <Field.Label>Область</Field.Label>
-                <NativeSelect.Root size="sm">
-                    <NativeSelect.Field {...register('region')} placeholder="Оберіть область">
-                        {regions.map(region => (
-                            <option key={region.ref} value={region.ref}>{region.description}</option>
-                        ))}
-                    </NativeSelect.Field>
-                    <NativeSelect.Indicator />
-                </NativeSelect.Root>
-                <Field.ErrorText>{errors.region?.message}</Field.ErrorText>
-            </Field.Root>
-
-            <Field.Root required invalid={!!errors.city}>
-                <Field.Label>Місто</Field.Label>
-                <Input
-                    placeholder="Львів"
-                    autoComplete="address-level2"
-                    disabled={disabled}
-                    {...register('city', {required: 'Вкажіть місто'})}
-                />
-                <Field.ErrorText>{errors.city?.message}</Field.ErrorText>
-            </Field.Root>
-
-            {/* TODO(delivery): a plain text box until the Nova Poshta branch
-                picker lands. The API only checks that a branch is filled in,
-                so swapping this input for the picker is a change here and
-                nowhere else. */}
-            <Field.Root required invalid={!!errors.branch}>
-                <Field.Label>Відділення</Field.Label>
-                <Input
-                    placeholder="Відділення №12, вул. Зелена 1"
-                    disabled={disabled}
-                    {...register('branch', {required: 'Вкажіть відділення'})}
-                />
-                <Field.ErrorText>{errors.branch?.message}</Field.ErrorText>
-                <Field.HelperText>
-                    Поки що вручну — невдовзі тут буде вибір відділення зі списку.
-                </Field.HelperText>
-            </Field.Root>
         </SimpleGrid>
+
+        <BranchPicker control={control} disabled={disabled} />
 
         <Field.Root>
             <Field.Label>Коментар</Field.Label>

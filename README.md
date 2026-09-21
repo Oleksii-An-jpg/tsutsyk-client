@@ -67,12 +67,28 @@ and cancel (refunded through monobank if it was paid). The page also subscribes
 to `orderUpdates`, so a payment confirming while they watch updates the page
 without a reload.
 
-**The branch field** in `app/_components/delivery-fields/` is a plain text
-input for now — that is where the Nova Poshta branch picker goes. It is one
-registered set of fields shared by checkout and the order page, and the API
-only checks that a branch is filled in, so swapping it is a change in that one
-file. The phone field works like the sign-in one: the input holds the part
-after `+380`, and `setValueAs` puts the prefix back.
+**The delivery fields** in `app/_components/delivery-fields/` are one
+registered set shared by checkout and the order page. The phone field works
+like the sign-in one: the input holds the part after `+380`, and `setValueAs`
+puts the prefix back.
+
+**The branch picker** is the oblast/settlement/branch cascade in
+`branch-picker.tsx`, searched against Nova Poshta's address directory as the
+buyer types. The oblast is only a filter that narrows the settlement search —
+settlement names repeat across the country — and it is not part of the order.
+What the order stores is what our API takes: `city` and `branch` as the plain
+text Nova Poshta itself uses ("Заболотів, Снятинський р-н, Івано-Франківська
+область", "Відділення №1: вул. М. Грушевського, 3"), so the refs never leave
+the picker. That also means an order opened weeks later still shows what was
+chosen; the picker looks the settlement up again in the background so that
+correcting the branch does not mean re-picking the city.
+
+Nova Poshta is only ever called from the server —
+`app/_lib/novaposhta/` holds the client and `app/_actions/novaposhta.ts` the
+three read-only Server Actions the browser reaches it through, so
+`NOVAPOSHTA_API_KEY` stays put. Every call is cached by Next, keyed on the
+request body: the directory changes a few times a year, and Nova Poshta rate-
+limits by key.
 
 ### Files
 
@@ -84,13 +100,16 @@ after `+380`, and `setValueAs` puts the prefix back.
 | `app/_actions/checkout.ts` | `startCheckout` Server Action |
 | `app/checkout/`, `app/_components/checkout/` | Sign-in, delivery details, pay |
 | `app/_components/delivery-fields/` | The delivery fields, shared by checkout and the order page |
+| `app/_lib/novaposhta/`, `app/_actions/novaposhta.ts` | Nova Poshta's address directory, and the browser's way to it |
 | `app/orders/`, `app/_components/orders/` | The customer's orders |
 | `app/orders/[id]/`, `app/_components/order/` | One order: status, payment, delivery, history |
 
 ### Setup
 
 Point `API_GRAPHQL_URL` at the API and set `NEXT_PUBLIC_SITE_URL` to this
-deployment's public origin. That is the whole configuration — see
+deployment's public origin. `NOVAPOSHTA_API_KEY` is the one other thing this
+app needs of its own: without it the branch picker has nothing to search, so
+checkout cannot be completed. It is read only on the server. See
 `.env.example`. Acquiring credentials belong in the API.
 
 ### Testing locally

@@ -24,7 +24,6 @@ import {formatPrice, toLocalPhone} from "@/app/_lib/format";
 import {CheckoutInput, CheckoutState, startCheckout} from "@/app/_actions/checkout";
 import AuthCard from "@/app/_components/auth";
 import DeliveryFields, {DeliveryValues} from "@/app/_components/delivery-fields";
-import {Region} from "@/app/_lib/novaposhta/types";
 
 export type CheckoutProduct = {
     id: string;
@@ -39,7 +38,6 @@ type CheckoutProps = {
     /** Null when the catalogue could not be read — the API is the price. */
     product: CheckoutProduct | null;
     quantity: number;
-    regions: Region[]
 };
 
 /**
@@ -51,7 +49,7 @@ type CheckoutProps = {
  * without one, so this only moves a step the buyer takes anyway to the point
  * where it also settles the address.
  */
-const Checkout: FC<CheckoutProps> = ({product, quantity, regions}) => {
+const Checkout: FC<CheckoutProps> = ({product, quantity}) => {
     useAdminAuth();
     const {checked, authenticated, user} = useReactiveVar(me);
 
@@ -99,7 +97,6 @@ const Checkout: FC<CheckoutProps> = ({product, quantity, regions}) => {
     return (
         <Container maxW="2xl" py={{base: 8, md: 16}}>
             <CheckoutForm
-                regions={regions}
                 product={product}
                 quantity={quantity}
                 phone={user?.phoneNumber}
@@ -111,9 +108,8 @@ const Checkout: FC<CheckoutProps> = ({product, quantity, regions}) => {
 const CheckoutForm: FC<{
     product: CheckoutProduct;
     quantity: number;
-    regions: Region[]
     phone?: string | null;
-}> = ({product, quantity, phone, regions}) => {
+}> = ({product, quantity, phone}) => {
     // Both type arguments spelled out: useActionState's payload overload is
     // otherwise inferred, and an editor that resolves a different React types
     // copy can land on the `FormData` shape a <form action> would use.
@@ -122,7 +118,7 @@ const CheckoutForm: FC<{
         null,
     );
 
-    const {register, handleSubmit, formState: {errors}} = useForm<DeliveryValues>({
+    const {register, handleSubmit, control, formState: {errors}} = useForm<DeliveryValues>({
         // Quiet while typing, honest on the submit attempt, live as it is
         // corrected — the same bargain the sign-in form strikes.
         mode: 'onTouched',
@@ -179,7 +175,7 @@ const CheckoutForm: FC<{
                     <Heading size="md">Куди привезти</Heading>
                 </Card.Header>
                 <Card.Body>
-                    <DeliveryFields regions={regions} register={register} errors={errors} />
+                    <DeliveryFields register={register} errors={errors} control={control} />
                 </Card.Body>
             </Card.Root>
 

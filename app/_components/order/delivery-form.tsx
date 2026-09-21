@@ -34,7 +34,7 @@ const DeliveryForm: FC<DeliveryFormProps> = ({order}) => {
     const [mutate, {loading, called, error}] = useUpdateOrderDelivery();
     const disabled = !order.editable;
 
-    const {register, handleSubmit, reset, formState: {errors}} = useForm<DeliveryValues>({
+    const {register, handleSubmit, reset, control, formState: {errors}} = useForm<DeliveryValues>({
         mode: 'onTouched',
         defaultValues: valuesFrom(order),
     });
@@ -73,7 +73,12 @@ const DeliveryForm: FC<DeliveryFormProps> = ({order}) => {
 
     return (
         <Stack as="form" gap={4} onSubmit={onSubmit}>
-            <DeliveryFields register={register} errors={errors} disabled={disabled} />
+            <DeliveryFields
+                register={register}
+                errors={errors}
+                control={control}
+                disabled={disabled}
+            />
 
             {disabled ? (
                 <Text fontSize="sm" color="fg.muted">
