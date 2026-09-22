@@ -11,10 +11,11 @@ type Values = {
 
 type VerificationProps = {
     result: ConfirmationResult
+    onChangeNumber: () => void
 }
 
-const Verification: FC<VerificationProps> = ({ result }) => {
-    const { control, handleSubmit, reset, formState: { errors, isSubmitting }, setError } = useForm<Values>();
+const Verification: FC<VerificationProps> = ({ result, onChangeNumber }) => {
+    const { control, handleSubmit, formState: { errors, isSubmitting }, setError } = useForm<Values>();
 
     const onSubmit = handleSubmit(async (data) => {
         if (!result) return;
@@ -76,9 +77,7 @@ const Verification: FC<VerificationProps> = ({ result }) => {
             <Button
                 variant="ghost"
                 width="full"
-                onClick={() => {
-                    reset();
-                }}
+                onClick={onChangeNumber}
                 type="button"
             >
                 Використати інший номер

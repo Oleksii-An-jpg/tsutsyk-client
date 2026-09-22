@@ -1,6 +1,6 @@
 'use client';
 
-import {FC, useState} from "react";
+import {FC, useRef, useState} from "react";
 import {Button, Field, Input, InputGroup, VStack} from "@chakra-ui/react";
 import {useForm} from "react-hook-form";
 import {ConfirmationResult, RecaptchaVerifier, signInWithPhoneNumber} from "firebase/auth";
@@ -20,22 +20,37 @@ const PhoneAuth: FC = () => {
         mode: 'onTouched'
     });
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+    // A verifier renders its widget into #recaptcha-container, and a second one
+    // can't render into the same element — so the old one has to be cleared
+    // before a retry or before this form comes back for a different number.
+    const verifierRef = useRef<RecaptchaVerifier | null>(null);
+    const clearVerifier = () => {
+        verifierRef.current?.clear();
+        verifierRef.current = null;
+    };
     return <VStack gap={4} asChild>
-        {confirmationResult ? <Verification result={confirmationResult} /> : <form onSubmit={handleSubmit(async (data) => {
+        {confirmationResult ? <Verification
+            result={confirmationResult}
+            onChangeNumber={() => {
+                clearVerifier();
+                setConfirmationResult(null);
+            }}
+        /> : <form onSubmit={(event) => handleSubmit(async (data) => {
             try {
-                // Initialize RecaptchaVerifier
-                const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                clearVerifier();
+                verifierRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
                     size: 'invisible',
                 });
 
-                const confirmation = await signInWithPhoneNumber(auth, data.phone, recaptchaVerifier);
+                const confirmation = await signInWithPhoneNumber(auth, data.phone, verifierRef.current);
                 setConfirmationResult(confirmation);
             } catch (e) {
+                clearVerifier();
                 const err = e as unknown as Error;
                 const errorMessage = err.message || 'Не вдалося надіслати код підтвердження';
                 setError('phone', { message: errorMessage });
             }
-        })}>
+        })(event)}>
             <Field.Root
                 required
                 invalid={!!errors.phone}
