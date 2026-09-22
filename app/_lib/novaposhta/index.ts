@@ -103,14 +103,17 @@ async function call<T>(
 
 /**
  * The name and its kind, put back together the way a Ukrainian says them:
- * "Вінницька область", but "місто Київ" and "Автономна Республіка Крим".
+ * "місто Київ", "Автономна Республіка Крим". The oblasts drop the word
+ * itself — the field is already called "Область", and repeating it down
+ * two dozen rows only makes the names harder to pick out.
  */
 function regionLabel(raw: RawRegion): string {
     const name = raw.Description?.trim() ?? "";
     const type = raw.RegionType?.trim() ?? "";
+    if (type.toLowerCase() === "область") return name.replace(/\s*область$/i, "").trim();
     if (!type || name.toLowerCase().includes(type.toLowerCase())) return name;
 
-    return type === "область" ? `${name} ${type}` : `${type} ${name}`;
+    return `${type} ${name}`;
 }
 
 /**

@@ -83,12 +83,11 @@ const Checkout: FC<CheckoutProps> = ({product, quantity}) => {
             <Container maxW="2xl" py={{base: 8, md: 16}}>
                 <Stack gap={6}>
                     <Stack gap={2}>
-                        <HStack justify="space-between">
-                            <Heading color="fg" size="xl">Оформлення</Heading>
-                            <Button asChild size="sm" variant="subtle">
-                                <Link href="/">На головну</Link>
-                            </Button>
-                        </HStack>
+                        {/* No way home in this header: the card below is the
+                            screen's own heading while signing in, and it
+                            carries the link — as it does on /auth, /orders
+                            and the admin panel. */}
+                        <Heading color="fg" size="xl">Оформлення</Heading>
                         <Text color="fg.muted">
                             Спершу увійдіть: акаунт потрібен, щоб користуватися трекером,
                             і саме в ньому ви стежитимете за замовленням.
