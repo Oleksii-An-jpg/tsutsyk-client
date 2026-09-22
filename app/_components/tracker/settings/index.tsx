@@ -4,12 +4,14 @@ import {FC} from 'react';
 import {
     CloseButton,
     Drawer,
+    HStack,
     IconButton,
     Portal,
     Separator,
     Button,
 } from '@chakra-ui/react';
-import {BiLogOut, BiMenu} from 'react-icons/bi';
+import {BiHome, BiLogOut, BiMenu} from 'react-icons/bi';
+import Link from 'next/link';
 import {auth} from "@/app/_lib/firebase";
 import TsutsykProfile from "@/app/_components/tracker/settings/tsutsyk-profile";
 
@@ -38,10 +40,24 @@ const Settings: FC<SettingsProps> = ({ tsutsykId }) => {
                             <TsutsykProfile tsutsykId={tsutsykId} />
                             <Separator my={3} />
                         </Drawer.Body>
+                        {/*
+                          * The map fills the window and hides the browser's own chrome, and
+                          * an installed PWA opened straight onto /me has no Back to go back
+                          * to — so without this the front page is unreachable from the one
+                          * screen people spend all their time on. It sits beside the sign-out
+                          * because this drawer is already where leaving lives.
+                          */}
                         <Drawer.Footer>
-                            <Button variant="outline" size="xs" onClick={() => auth.signOut()}>
-                                <BiLogOut /> Вийти
-                            </Button>
+                            <HStack w="full" justify="space-between">
+                                <Button asChild variant="outline" size="xs">
+                                    <Link href="/">
+                                        <BiHome /> На головну
+                                    </Link>
+                                </Button>
+                                <Button variant="outline" size="xs" onClick={() => auth.signOut()}>
+                                    <BiLogOut /> Вийти
+                                </Button>
+                            </HStack>
                         </Drawer.Footer>
 
                         <Drawer.CloseTrigger asChild>

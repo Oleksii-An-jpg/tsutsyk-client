@@ -18,12 +18,13 @@ import {LuArrowRight} from "react-icons/lu";
 import {useForm} from "react-hook-form";
 import {useReactiveVar} from "@apollo/client/react";
 import {auth} from "@/app/_lib/firebase";
-import {me} from "@/app/_lib/me";
+import {me, userPhone} from "@/app/_lib/me";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
 import {formatPrice, toLocalPhone} from "@/app/_lib/format";
 import {CheckoutInput, CheckoutState, startCheckout} from "@/app/_actions/checkout";
 import AuthCard from "@/app/_components/auth";
 import DeliveryFields, {DeliveryValues} from "@/app/_components/delivery-fields";
+import Link from "next/link";
 
 export type CheckoutProduct = {
     id: string;
@@ -82,7 +83,12 @@ const Checkout: FC<CheckoutProps> = ({product, quantity}) => {
             <Container maxW="2xl" py={{base: 8, md: 16}}>
                 <Stack gap={6}>
                     <Stack gap={2}>
-                        <Heading color="fg" size="xl">Оформлення</Heading>
+                        <HStack justify="space-between">
+                            <Heading color="fg" size="xl">Оформлення</Heading>
+                            <Button asChild size="sm" variant="subtle">
+                                <Link href="/">На головну</Link>
+                            </Button>
+                        </HStack>
                         <Text color="fg.muted">
                             Спершу увійдіть: акаунт потрібен, щоб користуватися трекером,
                             і саме в ньому ви стежитимете за замовленням.
@@ -99,7 +105,7 @@ const Checkout: FC<CheckoutProps> = ({product, quantity}) => {
             <CheckoutForm
                 product={product}
                 quantity={quantity}
-                phone={user?.phoneNumber}
+                phone={userPhone(user)}
             />
         </Container>
     );
@@ -149,7 +155,12 @@ const CheckoutForm: FC<{
     return (
         <Stack as="form" gap={6} onSubmit={onSubmit}>
             <Stack gap={2}>
-                <Heading color="fg" size="xl">Оформлення</Heading>
+                <HStack justify="space-between">
+                    <Heading color="fg" size="xl">Оформлення</Heading>
+                    <Button asChild size="sm" variant="subtle">
+                        <Link href="/">На головну</Link>
+                    </Button>
+                </HStack>
                 <Text color="fg.muted">
                     Пристрої збираються поштучно, тож це передзамовлення. Дані доставки
                     можна буде змінити, поки замовлення не поїхало.

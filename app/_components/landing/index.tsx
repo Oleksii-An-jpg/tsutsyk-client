@@ -13,6 +13,9 @@ import {
     HStack,
     Heading,
     Icon,
+    IconButton,
+    Menu,
+    Portal,
     SimpleGrid,
     Skeleton,
     Status,
@@ -23,7 +26,12 @@ import {
 import {
     LuArrowRight,
     LuBellRing,
+    LuLayoutDashboard,
+    LuLogIn,
+    LuLogOut,
     LuMapPinned,
+    LuMenu,
+    LuPackage,
     LuPawPrint,
     LuRadioTower,
     LuSiren,
@@ -31,6 +39,7 @@ import {
 import Link from "next/link";
 import {useReactiveVar} from "@apollo/client/react";
 import {ColorModeButton} from "@/components/ui/color-mode";
+import {auth} from "@/app/_lib/firebase";
 import PayButton from "@/app/_components/pay-button";
 import {authSettled, me} from "@/app/_lib/me";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
@@ -186,59 +195,123 @@ const WAYPOINTS: Waypoint[] = [
     },
 ];
 
-const AccountButton: FC = () => {
+/**
+ * Everything the nav used to hold, behind one button.
+ *
+ * Four controls and a theme toggle had accumulated along that row, which on a
+ * phone left the account button — the one people come back for — sharing its
+ * line with two links most visitors never need. A menu costs a tap, so what
+ * goes in it has to be worth a tap: the hero keeps the only thing this page is
+ * really asking for, and everything that is about an account someone already
+ * has moves in here.
+ *
+ * The theme toggle stays outside. It is a switch rather than a destination,
+ * and burying a one-tap toggle two taps deep is how it stops being used.
+ */
+const NavMenu: FC = () => {
+    const self = useReactiveVar(me);
+
+    return (
+        <Menu.Root positioning={{placement: "bottom-end"}}>
+            <Menu.Trigger asChild>
+                <IconButton size="sm" variant="ghost" rounded="full" title="Меню" aria-label="Меню">
+                    <LuMenu />
+                </IconButton>
+            </Menu.Trigger>
+
+            <Portal>
+                <Menu.Positioner>
+                    <Menu.Content minW="13rem">
+                        <AccountItem />
+
+                        <Menu.Item value="orders" asChild>
+                            <Link href="/orders">
+                                <LuPackage />
+                                Замовлення
+                            </Link>
+                        </Menu.Item>
+
+                        {/*
+                          * Off the `admin` claim, which arrives with the token — so unlike
+                          * the account item above there is nothing to wait for, and nothing
+                          * to show anybody else. /admin turns away a browser that guesses
+                          * the address anyway, and the API turns away the queries behind
+                          * it; this is only so that whoever packs the parcels does not have
+                          * to remember a URL.
+                          */}
+                        {self.admin && (
+                            <Menu.Item value="admin" asChild>
+                                <Link href="/admin">
+                                    <LuLayoutDashboard />
+                                    Панель
+                                </Link>
+                            </Menu.Item>
+                        )}
+
+                        {/*
+                          * Shown off `checked` rather than `authSettled`: whether anybody
+                          * is signed in is Firebase's answer alone, and waiting for the
+                          * getMyTsutsyks round-trip the account item needs would hide the
+                          * way out for no reason.
+                          */}
+                        {self.checked && self.authenticated && (
+                            <>
+                                <Menu.Separator />
+                                <Menu.Item value="sign-out" onSelect={() => auth.signOut()}>
+                                    <LuLogOut />
+                                    Вийти
+                                </Menu.Item>
+                            </>
+                        )}
+                    </Menu.Content>
+                </Menu.Positioner>
+            </Portal>
+        </Menu.Root>
+    );
+};
+
+const AccountItem: FC = () => {
     const self = useReactiveVar(me);
 
     // Until getMyTsutsyks answers we cannot tell an owner from a stranger, and
-    // guessing means the button silently changes where it goes under a finger
+    // guessing means the item silently changes where it goes under a finger
     // already on its way down.
     if (!authSettled(self)) {
-        return <Skeleton height="8" width="24" rounded="full" />;
+        return (
+            <Menu.Item value="account" disabled>
+                <Skeleton height="4" width="24" />
+            </Menu.Item>
+        );
     }
 
     if (self.authorised) {
         return (
-            <Button asChild size="sm" variant="outline" rounded="full">
-                <Link href="/me">Мій цуцик</Link>
-            </Button>
+            <Menu.Item value="account" asChild>
+                <Link href="/me">
+                    <LuPawPrint />
+                    Мій цуцик
+                </Link>
+            </Menu.Item>
         );
     }
 
     // An account without a device is not a failed login: /auth hands it the
     // claim form rather than a password field, so the label promises that.
     return (
-        <Button asChild size="sm" variant="outline" rounded="full">
-            <Link href="/auth">{self.authenticated ? "Прив'язати цуцика" : "Увійти"}</Link>
-        </Button>
-    );
-};
-
-/**
- * The way into the back office, for the people who have one.
- *
- * Shown off the `admin` claim, which arrives with the token — so unlike the
- * account button beside it there is nothing to wait for, and nothing to show
- * anybody else. /admin turns away a browser that guesses the address anyway,
- * and the API turns away the queries behind it; this is only so that whoever
- * packs the parcels does not have to remember a URL.
- */
-const AdminButton: FC = () => {
-    const self = useReactiveVar(me);
-
-    if (!self.admin) return null;
-
-    return (
-        <Button asChild size="sm" variant="ghost" rounded="full" colorPalette="orange">
-            <Link href="/admin">Панель</Link>
-        </Button>
+        <Menu.Item value="account" asChild>
+            <Link href="/auth">
+                <LuLogIn />
+                {self.authenticated ? "Прив'язати цуцика" : "Увійти"}
+            </Link>
+        </Menu.Item>
     );
 };
 
 // The landing sits outside /(private), so nothing else here subscribes to
 // Firebase — without this the nav would only ever see a signed-out `me`. It
-// lives here rather than in either button because both read that `me`, and a
-// hook that one of them happened to call was a subscription the other quietly
-// depended on being rendered.
+// lives here rather than in the menu because the menu's items read that `me`
+// whether or not it is open, and a subscription that only ran once somebody
+// opened the menu would be one the closed trigger quietly depended on.
 const NavBar: FC = () => {
     useAdminAuth();
 
@@ -257,7 +330,7 @@ const NavBar: FC = () => {
                 <Text fontWeight="bold" color="fg" fontSize="lg">
                     Цуцик <Text as="span" color="orange.fg">Live</Text>
                 </Text>
-                <HStack gap="3">
+                <HStack gap="2">
                     <Text
                         display={{base: "none", sm: "block"}}
                         fontSize="xs"
@@ -267,12 +340,8 @@ const NavBar: FC = () => {
                     >
                         Зроблено в Україні
                     </Text>
-                    <Button asChild size="sm" variant="ghost" rounded="full">
-                        <Link href="/orders">Замовлення</Link>
-                    </Button>
-                    <AdminButton />
-                    <AccountButton />
                     <ColorModeButton />
+                    <NavMenu />
                 </HStack>
             </HStack>
         </Container>

@@ -58,3 +58,21 @@ export function patchMe(patch: Partial<Me>) {
 export function authSettled({checked, authenticated, tsutsyksChecked}: Me) {
     return checked && (!authenticated || tsutsyksChecked);
 }
+
+/**
+ * The phone number a Firebase account carries, wherever it happens to sit.
+ *
+ * `User.phoneNumber` is only filled in when a phone credential is the account's
+ * own — somebody who signed in by SMS, or linked a number afterwards. An
+ * account built on Google or e-mail keeps a linked number on the matching
+ * entry in `providerData` instead, so reading the top-level field alone means
+ * asking a buyer to type a number we already hold.
+ *
+ * Null means the account genuinely has no number — the e-mail and Google
+ * sign-ins carry none — and the form asks for one, as it has to anyway.
+ */
+export function userPhone(user: User | null): string | null {
+    if (!user) return null;
+    if (user.phoneNumber) return user.phoneNumber;
+    return user.providerData.find((profile) => profile.phoneNumber)?.phoneNumber ?? null;
+}
