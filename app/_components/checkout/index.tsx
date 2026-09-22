@@ -145,7 +145,11 @@ const CheckoutForm: FC<{
         // the server, where the Firebase session in this tab does not exist.
         startTransition(async () => {
             const idToken = (await auth.currentUser?.getIdToken()) ?? '';
-            formAction({productId: product.id, quantity, idToken, delivery});
+            // An await ends the transition it happened in, so the call after
+            // it needs one of its own — otherwise `pending` never turns on.
+            startTransition(() => {
+                formAction({productId: product.id, quantity, idToken, delivery});
+            });
         });
     });
 

@@ -45,7 +45,12 @@ const NoTsutsyk: FC = () => {
         <Container maxW="2xl" py={16}>
             <Card.Root>
                 <Card.Header>
-                    <Heading size="lg">Ще жодного цуцика</Heading>
+                    <HStack justify="space-between">
+                        <Heading size="lg">Ще жодного цуцика</Heading>
+                        <Button asChild size="sm" variant="subtle">
+                            <Link href="/">На головну</Link>
+                        </Button>
+                    </HStack>
                     <Text fontSize="sm" color="fg.muted">
                         Обліковий запис є — лишилось прив&#39;язати до нього пристрій.
                     </Text>
