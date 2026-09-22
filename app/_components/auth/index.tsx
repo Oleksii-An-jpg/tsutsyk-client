@@ -8,6 +8,7 @@ import {BiLogoGoogle} from 'react-icons/bi';
 import {auth} from '@/app/_lib/firebase';
 import EmailAuth from '@/app/_components/auth/email';
 import PhoneAuth from '@/app/_components/auth/phone';
+import Link from "next/link";
 
 type AuthCardProps = {
     title: string;
@@ -33,7 +34,12 @@ const AuthCard: FC<AuthCardProps> = ({title, description}) => {
     return (
         <Card.Root>
             <Card.Header>
-                <Heading size="lg">{title}</Heading>
+                <HStack justify="space-between">
+                    <Heading size="lg">{title}</Heading>
+                    <Button asChild size="sm" variant="subtle">
+                        <Link href="/">На головну</Link>
+                    </Button>
+                </HStack>
                 {description && (
                     <Text fontSize="sm" color="fg.muted">
                         {description}

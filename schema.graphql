@@ -47,10 +47,14 @@ type Location {
 }
 
 type Mutation {
+  cancelAnyOrder(orderId: ID!, reason: String): Order!
   cancelOrder(orderId: ID!, reason: String): Order!
   claimTsutsyk(id: ID!, name: String!, photoUrl: String): Tsutsyk!
   deletePushSubscription(endpoint: String!): Boolean!
   endSession(sessionId: String!): Session!
+  markOrderDelivered(orderId: ID!): Order!
+  markOrderInAssembly(orderId: ID!): Order!
+  markOrderShipped(orderId: ID!, trackingNumber: String!): Order!
   placeOrder(input: PlaceOrderInput!): OrderPayment!
   postLocation(battery: Int, lat: Float!, lng: Float!, sessionId: String!, tsutsykId: String!): Location!
   refreshOrderPayment(orderId: ID!): Order!
@@ -88,6 +92,7 @@ type Order {
 }
 
 enum OrderActor {
+  ADMIN
   CUSTOMER
   MONOBANK
   SYSTEM
@@ -194,10 +199,12 @@ input PushSubscriptionInput {
 type Query {
   getActiveSession(tsutsykId: String!): Session
   getAlertRegions: [AlertRegion!]!
+  getAnyOrder(id: ID!): Order
   getMyOrders: [Order!]!
   getMyTsutsyks: [Tsutsyk!]!
   getOrder(id: ID!): Order
   getOrderTracking(id: ID!, phone: String!): OrderTracking
+  getOrders(limit: Int, status: OrderStatus): [Order!]!
   getProducts: [Product!]!
   getPushConfig: PushConfig!
   getSession(sessionId: String!): Session
