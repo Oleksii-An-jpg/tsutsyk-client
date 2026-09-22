@@ -1,7 +1,7 @@
 'use client';
 
 import {FC, ReactNode} from "react";
-import {BiSolidBatteryCharging} from "react-icons/bi";
+import {BiLogOut, BiSolidBatteryCharging} from "react-icons/bi";
 import {
     Avatar,
     Badge,
@@ -13,6 +13,7 @@ import {
     HStack,
     Heading,
     Icon,
+    IconButton,
     SimpleGrid,
     Skeleton,
     Status,
@@ -31,6 +32,7 @@ import {
 import Link from "next/link";
 import {useReactiveVar} from "@apollo/client/react";
 import {ColorModeButton} from "@/components/ui/color-mode";
+import {auth} from "@/app/_lib/firebase";
 import PayButton from "@/app/_components/pay-button";
 import {authSettled, me} from "@/app/_lib/me";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
@@ -214,6 +216,38 @@ const AccountButton: FC = () => {
 };
 
 /**
+ * The way back out.
+ *
+ * Every other place that offers this sits behind a sign-in — the tracker's
+ * settings drawer and the no-device screen — so somebody who lands here after
+ * signing in, or who is on a shared phone, had no way of leaving the account
+ * short of clearing the site. That the landing is public is the reason it
+ * needs the button, not a reason to skip it.
+ *
+ * Shown off `checked` rather than `authSettled`: whether anybody is signed in
+ * is Firebase's answer alone, and waiting for the getMyTsutsyks round-trip the
+ * account button beside it needs would hide the way out for no reason.
+ */
+const SignOutButton: FC = () => {
+    const self = useReactiveVar(me);
+
+    if (!self.checked || !self.authenticated) return null;
+
+    return (
+        <IconButton
+            size="sm"
+            variant="ghost"
+            rounded="full"
+            title="Вийти"
+            aria-label="Вийти"
+            onClick={() => auth.signOut()}
+        >
+            <BiLogOut />
+        </IconButton>
+    );
+};
+
+/**
  * The way into the back office, for the people who have one.
  *
  * Shown off the `admin` claim, which arrives with the token — so unlike the
@@ -272,6 +306,7 @@ const NavBar: FC = () => {
                     </Button>
                     <AdminButton />
                     <AccountButton />
+                    <SignOutButton />
                     <ColorModeButton />
                 </HStack>
             </HStack>

@@ -18,7 +18,7 @@ import {LuArrowRight} from "react-icons/lu";
 import {useForm} from "react-hook-form";
 import {useReactiveVar} from "@apollo/client/react";
 import {auth} from "@/app/_lib/firebase";
-import {me} from "@/app/_lib/me";
+import {me, userPhone} from "@/app/_lib/me";
 import {useAdminAuth} from "@/app/_hooks/useAdminAuth";
 import {formatPrice, toLocalPhone} from "@/app/_lib/format";
 import {CheckoutInput, CheckoutState, startCheckout} from "@/app/_actions/checkout";
@@ -99,7 +99,7 @@ const Checkout: FC<CheckoutProps> = ({product, quantity}) => {
             <CheckoutForm
                 product={product}
                 quantity={quantity}
-                phone={user?.phoneNumber}
+                phone={userPhone(user)}
             />
         </Container>
     );
