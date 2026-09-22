@@ -133,7 +133,12 @@ const AsyncCombobox: FC<AsyncComboboxProps> = ({
                 </Combobox.Control>
                 <Portal>
                     <Combobox.Positioner>
-                        <Combobox.Content maxH="15rem" overflowY="auto">
+                        {/* The list is portaled out to <body>, so it is not
+                            under anything that has named a foreground for it.
+                            `bg.panel` comes from the recipe; `fg` is its pair,
+                            and saying it here keeps the labels legible however
+                            the page outside happens to be painted. */}
+                        <Combobox.Content color="fg" maxH="15rem" overflowY="auto">
                             <Combobox.Empty>{loading ? "Шукаємо…" : emptyText}</Combobox.Empty>
                             {items.map((item) => (
                                 <Combobox.Item key={item.value} item={item}>
