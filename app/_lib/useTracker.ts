@@ -68,6 +68,26 @@ import {
     ClaimTsutsykMutation,
     ClaimTsutsykMutationVariables
 } from "@/app/_documents/__generated__/MUTATION_CLAIM_TSUTSYK.codegen";
+import {QUERY_ALERT_AREAS} from "@/app/_documents/QUERY_ALERT_AREAS";
+import {
+    AlertAreasQuery,
+    AlertAreasQueryVariables
+} from "@/app/_documents/__generated__/QUERY_ALERT_AREAS.codegen";
+import {MUTATION_CREATE_ALERT_AREA} from "@/app/_documents/MUTATION_CREATE_ALERT_AREA";
+import {
+    CreateAlertAreaMutation,
+    CreateAlertAreaMutationVariables
+} from "@/app/_documents/__generated__/MUTATION_CREATE_ALERT_AREA.codegen";
+import {MUTATION_UPDATE_ALERT_AREA} from "@/app/_documents/MUTATION_UPDATE_ALERT_AREA";
+import {
+    UpdateAlertAreaMutation,
+    UpdateAlertAreaMutationVariables
+} from "@/app/_documents/__generated__/MUTATION_UPDATE_ALERT_AREA.codegen";
+import {MUTATION_DELETE_ALERT_AREA} from "@/app/_documents/MUTATION_DELETE_ALERT_AREA";
+import {
+    DeleteAlertAreaMutation,
+    DeleteAlertAreaMutationVariables
+} from "@/app/_documents/__generated__/MUTATION_DELETE_ALERT_AREA.codegen";
 import {Location} from "@/app/_documents/__generated__/globalTypes.codegen";
 
 // ─── Queries ──────────────────────────────────────────────────────────────
@@ -133,6 +153,13 @@ export function useAlertRegions() {
     );
 }
 
+export function useAlertAreas(tsutsykId: string) {
+    return useQuery<AlertAreasQuery, AlertAreasQueryVariables>(
+        QUERY_ALERT_AREAS,
+        { variables: { tsutsykId }, skip: !tsutsykId }
+    );
+}
+
 export function useTsutsykHistory(sessionId: string) {
     return useQuery<TsutsykHistoryQuery, TsutsykHistoryQueryVariables>(
         QUERY_TSUTSYK_HISTORY,
@@ -173,6 +200,24 @@ export function usePostLocation() {
 
 export function useUpdateTsutsyk() {
     return useMutation<UpdateTsutsykMutation, UpdateTsutsykMutationVariables>(MUTATION_UPDATE_TSUTSYK);
+}
+
+// Creating and deleting change the list itself, so both refetch it; an update
+// comes back as the area and Apollo merges it into the cached list by id.
+export function useCreateAlertArea() {
+    return useMutation<CreateAlertAreaMutation, CreateAlertAreaMutationVariables>(MUTATION_CREATE_ALERT_AREA, {
+        refetchQueries: [QUERY_ALERT_AREAS],
+    });
+}
+
+export function useUpdateAlertArea() {
+    return useMutation<UpdateAlertAreaMutation, UpdateAlertAreaMutationVariables>(MUTATION_UPDATE_ALERT_AREA);
+}
+
+export function useDeleteAlertArea() {
+    return useMutation<DeleteAlertAreaMutation, DeleteAlertAreaMutationVariables>(MUTATION_DELETE_ALERT_AREA, {
+        refetchQueries: [QUERY_ALERT_AREAS],
+    });
 }
 
 export function useClaimTsutsyk() {

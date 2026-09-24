@@ -5,6 +5,7 @@ import {useTsutsyk, useTsutsykTracking} from "@/app/_lib/useTracker";
 import Me from './me'
 import Tsutsyk from "@/app/_components/tracker/tsutsyk";
 import Track from "@/app/_components/tracker/track";
+import AlertAreas from "@/app/_components/tracker/alert-areas";
 import {useReactiveVar} from "@apollo/client/react";
 import {Alert, Box} from "@chakra-ui/react";
 import Controls from "@/app/_components/tracker/controls";
@@ -57,6 +58,7 @@ const Tracker: FC<TrackerProps> = ({ userAgent }) => {
             disableDefaultUI
         >
             <Me />
+            <AlertAreas tsutsykId={tsutsykIds[0]} />
             <Track trail={trail} />
             {latestLocation && (
                 <Tsutsyk

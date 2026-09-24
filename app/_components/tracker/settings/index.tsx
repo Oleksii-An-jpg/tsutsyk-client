@@ -1,6 +1,6 @@
 'use client';
 
-import {FC} from 'react';
+import {FC, useState} from 'react';
 import {
     CloseButton,
     Drawer,
@@ -14,14 +14,19 @@ import {BiHome, BiLogOut, BiMenu} from 'react-icons/bi';
 import Link from 'next/link';
 import {auth} from "@/app/_lib/firebase";
 import TsutsykProfile from "@/app/_components/tracker/settings/tsutsyk-profile";
+import AlertAreasList from "@/app/_components/tracker/settings/alert-areas";
 
 type SettingsProps = {
     tsutsykId: string;
 };
 
 const Settings: FC<SettingsProps> = ({ tsutsykId }) => {
+    // Controlled so that starting to draw an area can get the drawer out of
+    // the way of the map it is about to be drawn on.
+    const [open, setOpen] = useState(false);
+
     return (
-        <Drawer.Root placement="end">
+        <Drawer.Root placement="end" open={open} onOpenChange={({ open }) => setOpen(open)}>
             <Drawer.Trigger asChild>
                 <IconButton size="sm" colorPalette="gray" aria-label="Open sessions">
                     <BiMenu />
@@ -38,6 +43,8 @@ const Settings: FC<SettingsProps> = ({ tsutsykId }) => {
 
                         <Drawer.Body p={3} overflowY="auto">
                             <TsutsykProfile tsutsykId={tsutsykId} />
+                            <Separator my={3} />
+                            <AlertAreasList tsutsykId={tsutsykId} onStartDrawing={() => setOpen(false)} />
                             <Separator my={3} />
                         </Drawer.Body>
                         {/*

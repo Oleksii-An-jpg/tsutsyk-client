@@ -5,6 +5,14 @@ enum AirRaidStatus {
   UNKNOWN
 }
 
+type AlertArea {
+  enabled: Boolean!
+  id: ID!
+  name: String!
+  points: [LatLng!]!
+  tsutsykId: ID!
+}
+
 type AlertRegion {
   title: String!
   uid: Int!
@@ -37,6 +45,16 @@ enum DeliveryMethod {
   UKRPOSHTA
 }
 
+type LatLng {
+  lat: Float!
+  lng: Float!
+}
+
+input LatLngInput {
+  lat: Float!
+  lng: Float!
+}
+
 type Location {
   battery: Float
   id: ID!
@@ -50,6 +68,8 @@ type Mutation {
   cancelAnyOrder(orderId: ID!, reason: String): Order!
   cancelOrder(orderId: ID!, reason: String): Order!
   claimTsutsyk(id: ID!, name: String!, photoUrl: String): Tsutsyk!
+  createAlertArea(name: String!, points: [LatLngInput!]!, tsutsykId: ID!): AlertArea!
+  deleteAlertArea(id: ID!, tsutsykId: ID!): Boolean!
   deletePushSubscription(endpoint: String!): Boolean!
   endSession(sessionId: String!): Session!
   markOrderDelivered(orderId: ID!): Order!
@@ -61,6 +81,7 @@ type Mutation {
   retryOrderPayment(orderId: ID!, redirectUrl: String): OrderPayment!
   savePushSubscription(input: PushSubscriptionInput!): Boolean!
   startSession(sessionId: String!, tsutsykId: String!): Session!
+  updateAlertArea(enabled: Boolean, id: ID!, name: String, points: [LatLngInput!], tsutsykId: ID!): AlertArea!
   updateOrderContact(input: OrderContactInput!, orderId: ID!): Order!
   updateOrderDelivery(input: DeliveryInput!, orderId: ID!): Order!
   updateTsutsyk(alertDistanceMeters: Int, alertRegionUid: Int, id: ID!, photoUrl: String): Tsutsyk!
@@ -198,6 +219,7 @@ input PushSubscriptionInput {
 
 type Query {
   getActiveSession(tsutsykId: String!): Session
+  getAlertAreas(tsutsykId: ID!): [AlertArea!]!
   getAlertRegions: [AlertRegion!]!
   getAnyOrder(id: ID!): Order
   getMyOrders: [Order!]!
