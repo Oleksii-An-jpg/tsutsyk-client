@@ -39,8 +39,11 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
 
     const { register, handleSubmit, reset } = useForm<Values>();
 
+    // Wait for the region list too: a native select can only take a value it
+    // has an <option> for, so resetting before the regions arrive silently
+    // lands on "no region" and nothing puts the saved one back.
     useEffect(() => {
-        if (tsutsyk) {
+        if (tsutsyk && regionsData) {
             reset({
                 alertDistanceMeters: tsutsyk.alertDistanceMeters,
                 alertRegionUid: tsutsyk.alertRegion
@@ -48,7 +51,7 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
                     : NO_REGION,
             });
         }
-    }, [tsutsyk, reset]);
+    }, [tsutsyk, regionsData, reset]);
 
     const onSubmit = handleSubmit(async ({ alertDistanceMeters, alertRegionUid, photo }) => {
         const file = photo?.[0];
