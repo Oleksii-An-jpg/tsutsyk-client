@@ -1,6 +1,6 @@
 'use client';
 
-import {FC, useEffect} from 'react';
+import {FC, useMemo} from 'react';
 import {
     Badge,
     Button,
@@ -37,18 +37,28 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
     const regions = regionsData?.getAlertRegions ?? [];
     const [mutate, { loading: saving }] = useUpdateTsutsyk();
 
-    const { register, handleSubmit, reset } = useForm<Values>();
+    // Fed through `values` rather than a `reset()` in an effect: a plain reset
+    // drops react-hook-form's field refs and only writes the DOM once the
+    // inputs re-register, which the drawer's first open does not reliably do —
+    // the select sat on "no region" while the form held the saved one. `values`
+    // resets with the refs kept, so the select is written directly.
+    //
+    // Waits for the region list too: a native select can only take a value it
+    // has an <option> for.
+    const values = useMemo<Values | undefined>(
+        () =>
+            tsutsyk && regionsData
+                ? {
+                      alertDistanceMeters: tsutsyk.alertDistanceMeters,
+                      alertRegionUid: tsutsyk.alertRegion
+                          ? String(tsutsyk.alertRegion.uid)
+                          : NO_REGION,
+                  }
+                : undefined,
+        [tsutsyk, regionsData],
+    );
 
-    useEffect(() => {
-        if (tsutsyk) {
-            reset({
-                alertDistanceMeters: tsutsyk.alertDistanceMeters,
-                alertRegionUid: tsutsyk.alertRegion
-                    ? String(tsutsyk.alertRegion.uid)
-                    : NO_REGION,
-            });
-        }
-    }, [tsutsyk, reset]);
+    const { register, handleSubmit } = useForm<Values>({ values });
 
     const onSubmit = handleSubmit(async ({ alertDistanceMeters, alertRegionUid, photo }) => {
         const file = photo?.[0];
@@ -88,8 +98,8 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
                 />
             </Field.Root>
 
-            <Field.Root disabled>
-                <Field.Label>Область для тривог (незабаром)</Field.Label>
+            <Field.Root>
+                <Field.Label>Область для тривог</Field.Label>
                 <NativeSelect.Root size="sm">
                     <NativeSelect.Field {...register('alertRegionUid')}>
                         <option value={NO_REGION}>Не стежити за тривогами</option>
