@@ -98,8 +98,8 @@ const TsutsykProfile: FC<TsutsykProfileProps> = ({ tsutsykId }) => {
                 />
             </Field.Root>
 
-            <Field.Root disabled>
-                <Field.Label>Область для тривог (незабаром)</Field.Label>
+            <Field.Root>
+                <Field.Label>Область для тривог</Field.Label>
                 <NativeSelect.Root size="sm">
                     <NativeSelect.Field {...register('alertRegionUid')}>
                         <option value={NO_REGION}>Не стежити за тривогами</option>
